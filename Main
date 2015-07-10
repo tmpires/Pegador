@@ -1,0 +1,46 @@
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.motor.EV3MediumRegulatedMotor;
+import lejos.hardware.port.MotorPort;
+import lejos.utility.Delay;
+
+
+public class Main {
+
+	public static void main(String[] args) {
+		EV3MediumRegulatedMotor motorGarra = new EV3MediumRegulatedMotor(MotorPort.A);
+		motorGarra.setSpeed(motorGarra.getMaxSpeed());
+		EV3LargeRegulatedMotor motorEsq = new EV3LargeRegulatedMotor(MotorPort.B);
+		EV3LargeRegulatedMotor motorDir = new EV3LargeRegulatedMotor(MotorPort.C);
+		motorEsq.setSpeed(100);
+		motorDir.setSpeed(100);
+		
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+		}
+		
+		while(!Button.ESCAPE.isDown()){
+			
+			System.out.println("Distancia: "+ Reconhecimento.getDistancia());
+			
+			while(Reconhecimento.getDistancia()>0.05 && !Button.ESCAPE.isDown()){
+				motorEsq.forward();
+				motorDir.forward();
+			}
+				motorEsq.stop(true);
+				motorDir.stop();
+				if(Reconhecimento.isPreto()){
+				motorGarra.rotate(-1700);
+				Delay.msDelay(2000);
+				motorGarra.rotate(1700);
+				}
+		
+		}
+
+	}
+
+}
