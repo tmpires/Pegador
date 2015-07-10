@@ -1,0 +1,71 @@
+import lejos.hardware.Button;
+import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.EV3UltrasonicSensor;
+import lejos.robotics.SampleProvider;
+import lejos.utility.Delay;
+
+
+public class Reconhecimento implements Runnable{
+	private static EV3ColorSensor sensorCor= new EV3ColorSensor(SensorPort.S2);
+	private static EV3UltrasonicSensor sensorUS= new EV3UltrasonicSensor(SensorPort.S1);
+	private static boolean preto = false;
+	private static float distancia = 0;
+	private static void amostraCor(){
+		//amostra sensor de cor
+		SampleProvider Cor = sensorCor.getRGBMode();
+		float amostra[] = new float[Cor.sampleSize()];
+		Cor.fetchSample(amostra, 0);
+		//amostra sensor ultrassom
+		SampleProvider dist = sensorUS.getDistanceMode();
+		float amostraDist[] = new float[dist.sampleSize()];
+		dist.fetchSample(amostraDist, 0);
+		distancia = amostraDist[0];
+		System.out.println(amostra[0]);
+		
+		if(amostra[0] > 0.0009 && amostra[0] < 0.009){
+			Cor.fetchSample(amostra, 0);
+			if(amostra[0] > 0.0009 && amostra[0] < 0.009){
+				preto=true;
+				
+			}else
+				preto=false;
+		}else
+			preto=false;
+		
+	}
+	
+	
+	
+	public static float getDistancia() {
+		return distancia;
+	}
+
+
+
+	public static void setDistancia(float distancia) {
+		Reconhecimento.distancia = distancia;
+	}
+
+
+
+	public static boolean isPreto() {
+		return preto;
+	}
+
+
+
+	public static void setPreto(boolean preto) {
+		Reconhecimento.preto = preto;
+	}
+
+
+
+	public void run() {
+		while (!Button.ESCAPE.isDown()) {
+			amostraCor();
+
+		}
+	}
+
+}
