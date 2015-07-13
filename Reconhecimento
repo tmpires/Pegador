@@ -1,67 +1,63 @@
 import lejos.hardware.Button;
+import lejos.hardware.Sound;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
+import lejos.hardware.sensor.HiTechnicColorSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
+public class Reconhecimento implements Runnable {
 
-public class Reconhecimento implements Runnable{
-	private static EV3ColorSensor sensorCor= new EV3ColorSensor(SensorPort.S2);
-	private static EV3UltrasonicSensor sensorUS= new EV3UltrasonicSensor(SensorPort.S1);
-	private static boolean preto = false;
-	private static float distancia = 0;
-	private static void amostraCor(){
-		//amostra sensor de cor
-		SampleProvider Cor = sensorCor.getRGBMode();
-		float amostra[] = new float[Cor.sampleSize()];
-		Cor.fetchSample(amostra, 0);
-		//amostra sensor ultrassom
+	private static EV3ColorSensor sensorCor = new EV3ColorSensor(SensorPort.S2);
+	private static EV3UltrasonicSensor sensorUS = new EV3UltrasonicSensor(
+			SensorPort.S1);
+
+	private static boolean éPreto;
+	private static boolean temBoneco;
+	private static float distancia;
+
+	private static void amostraCor() {
+
+		SampleProvider CorDir = sensorCor.getRGBMode();
 		SampleProvider dist = sensorUS.getDistanceMode();
+		float amostraCor[] = new float[CorDir.sampleSize()];
 		float amostraDist[] = new float[dist.sampleSize()];
+		CorDir.fetchSample(amostraCor, 0);
 		dist.fetchSample(amostraDist, 0);
 		distancia = amostraDist[0];
-		System.out.println(amostra[0]);
-		
-		if(amostra[0] > 0.0009 && amostra[0] < 0.009){
-			Cor.fetchSample(amostra, 0);
-			if(amostra[0] > 0.0009 && amostra[0] < 0.009){
-				preto=true;
-				
-			}else
-				preto=false;
-		}else
-			preto=false;
-		
+
+		if (amostraCor[0] > 0.0009 && amostraCor[0] < 0.009) {
+			CorDir.fetchSample(amostraCor, 0);
+			if (amostraCor[0] > 0.0009 && amostraCor[0] < 0.009) {
+				éPreto = true;
+				temBoneco = true;
+			}
+		} else {
+			éPreto = false;
+			if (amostraCor[0] > 0.01) {
+				temBoneco = true;
+			} else {
+				temBoneco = false;
+			}
+		}
 	}
-	
-	
-	
+
+	public static boolean getPreto() {
+		return éPreto;
+	}
+
 	public static float getDistancia() {
 		return distancia;
 	}
 
-
-
-	public static void setDistancia(float distancia) {
-		Reconhecimento.distancia = distancia;
+	public static boolean getBoneco() {
+		return temBoneco;
 	}
 
-
-
-	public static boolean isPreto() {
-		return preto;
-	}
-
-
-
-	public static void setPreto(boolean preto) {
-		Reconhecimento.preto = preto;
-	}
-
-
-
+	@Override
 	public void run() {
+		// TODO Auto-generated method stub
 		while (!Button.ESCAPE.isDown()) {
 			amostraCor();
 
