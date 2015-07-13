@@ -1,0 +1,47 @@
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
+
+public class MainPegador {
+	private static final double RAIO_RODA = 0.028; // (metros)
+
+	public static void main(String[] args) {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+			System.out
+					.println("Verifique se a garra esta aberta e Aperte ENTER para inciar");
+		}
+
+		while (!Button.ESCAPE.isDown()) {
+			System.out.println("Distancia: " + Reconhecimento.getDistancia());
+			Navegacao.setVelocidade(300);
+			Navegacao.andarFrente();
+
+			if (Reconhecimento.getDistancia() <= 0.2) {
+				double distancia = Reconhecimento.getDistancia();
+				Navegacao.setVelocidade(100);
+				Navegacao
+						.andarGraus((int) (180 * (distancia - 0.05) / (Math.PI * RAIO_RODA)));
+				Navegacao.parar();
+				Captura.fecharGarra();
+				if (!Reconhecimento.getPreto()) {
+					Button.LEDPattern(2);
+					Delay.msDelay(100);
+					Captura.abrirGarra();
+					System.exit(0);
+					// Navegacao.desviar();
+				} else {
+					Button.LEDPattern(1);
+					Delay.msDelay(1000);
+					Captura.abrirGarra();
+					System.exit(0);
+				}
+			}
+
+		}
+
+	}
+}
