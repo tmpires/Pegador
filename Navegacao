@@ -1,0 +1,89 @@
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.port.MotorPort;
+
+public class Navegacao {
+	private static EV3LargeRegulatedMotor motorEsq = new EV3LargeRegulatedMotor(
+			MotorPort.B);
+	private static EV3LargeRegulatedMotor motorDir = new EV3LargeRegulatedMotor(
+			MotorPort.C);
+
+	public static void andarFrente() {
+		int tachoDir = motorDir.getTachoCount();  
+		int tachoEsq = motorEsq.getTachoCount();
+		if(tachoDir != tachoEsq){ 
+			if(tachoDir > tachoEsq)
+				motorEsq.forward();
+		    if(tachoEsq > tachoDir)
+		    	motorDir.forward();
+		} else {
+			motorEsq.forward();
+			motorDir.forward();
+		}
+	}
+	
+	private static void resetarTacometro(){
+		motorEsq.resetTachoCount();
+		motorDir.resetTachoCount();
+	}
+	
+	public static void andarGraus(int angulo){
+		motorEsq.rotate(angulo,true);
+		motorDir.rotate(angulo);
+	}
+
+	public static void parar() {
+		motorEsq.stop(true);
+		motorDir.stop();
+	}
+	
+	public static void ré() {
+		motorEsq.backward();
+		motorDir.backward();
+	}
+	
+	public static void virarEsq(){
+		resetarTacometro();
+		motorEsq.rotate(-100, true);
+		motorDir.rotate(100);
+	}
+	
+	public static void virarDir(){
+		resetarTacometro();
+		motorEsq.rotate(100, true);
+		motorDir.rotate(-100);
+	}
+	
+	public static void setVelocidade(int vel){
+		motorEsq.setSpeed(vel);
+		motorDir.setSpeed(vel);
+	}
+	
+	/*public static void retornar(){
+		virarEsq();
+		Delay.msDelay(5000);
+		setVelocidade(300);
+		andarFrente();
+		Delay.msDelay(2000);
+		parar();
+	}
+	
+	public static void desviar(){
+		parar();
+		virarEsq();
+		setVelocidade(100);
+		andarFrente();
+		Delay.msDelay(2000);
+		parar();
+		virarDir();
+		parar();
+		andarFrente();
+		Delay.msDelay(3000);
+		parar();
+		virarDir();
+		parar();
+		andarFrente();
+		Delay.msDelay(2000);
+		virarEsq();
+	}*/
+
+}
