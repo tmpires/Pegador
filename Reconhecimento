@@ -1,11 +1,8 @@
 import lejos.hardware.Button;
-import lejos.hardware.Sound;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
-import lejos.hardware.sensor.HiTechnicColorSensor;
 import lejos.robotics.SampleProvider;
-import lejos.utility.Delay;
 
 public class Reconhecimento implements Runnable {
 
@@ -19,16 +16,16 @@ public class Reconhecimento implements Runnable {
 
 	private static void amostraCor() {
 
-		SampleProvider CorDir = sensorCor.getRGBMode();
+		SampleProvider Cor = sensorCor.getRGBMode();
 		SampleProvider dist = sensorUS.getDistanceMode();
-		float amostraCor[] = new float[CorDir.sampleSize()];
+		float amostraCor[] = new float[Cor.sampleSize()];
 		float amostraDist[] = new float[dist.sampleSize()];
-		CorDir.fetchSample(amostraCor, 0);
+		Cor.fetchSample(amostraCor, 0);
 		dist.fetchSample(amostraDist, 0);
 		distancia = amostraDist[0];
 
 		if (amostraCor[0] > 0.0009 && amostraCor[0] < 0.009) {
-			CorDir.fetchSample(amostraCor, 0);
+			Cor.fetchSample(amostraCor, 0);
 			if (amostraCor[0] > 0.0009 && amostraCor[0] < 0.009) {
 				éPreto = true;
 				temBoneco = true;
@@ -55,12 +52,9 @@ public class Reconhecimento implements Runnable {
 		return temBoneco;
 	}
 
-	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		while (!Button.ESCAPE.isDown()) {
 			amostraCor();
-
 		}
 	}
 
