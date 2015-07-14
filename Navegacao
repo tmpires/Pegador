@@ -1,33 +1,50 @@
+import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
+import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3TouchSensor;
+import lejos.robotics.SampleProvider;
 
-public class Navegacao {
+public class Navegacao implements Runnable {
 	private static EV3LargeRegulatedMotor motorEsq = new EV3LargeRegulatedMotor(
 			MotorPort.B);
 	private static EV3LargeRegulatedMotor motorDir = new EV3LargeRegulatedMotor(
 			MotorPort.C);
+	private static EV3TouchSensor sensorToque = new EV3TouchSensor(
+			SensorPort.S3);
+	private static boolean tocado = false;
+	private static final double RAIO_RODA = 0.028; // metros
+	private static final double DISTANCIA_RODAS = 0.135; // metros
+	private static int tachoDir = motorDir.getTachoCount();
+	private static int tachoEsq = motorEsq.getTachoCount();
+
+	public Navegacao() {
+		resetarTacometro();
+	}
 
 	public static void andarFrente() {
-		int tachoDir = motorDir.getTachoCount();  
-		int tachoEsq = motorEsq.getTachoCount();
-		if(tachoDir != tachoEsq){ 
-			if(tachoDir > tachoEsq)
+		tachoDir = motorDir.getTachoCount();
+		tachoEsq = motorEsq.getTachoCount();
+		if (tachoDir != tachoEsq) {
+			if (tachoDir > tachoEsq)
 				motorEsq.forward();
-		    if(tachoEsq > tachoDir)
-		    	motorDir.forward();
+			if (tachoEsq > tachoDir)
+				motorDir.forward();
 		} else {
 			motorEsq.forward();
 			motorDir.forward();
 		}
 	}
-	
-	private static void resetarTacometro(){
+
+	public static void resetarTacometro() {
 		motorEsq.resetTachoCount();
 		motorDir.resetTachoCount();
 	}
-	
-	public static void andarGraus(int angulo){
-		motorEsq.rotate(angulo,true);
+
+	public static void andarGraus(double distancia) {
+		// gira em cada roda o angulo necessario para chegar na distancia - 0.05
+		int angulo = (int) (180 * (distancia - 0.07) / (Math.PI * RAIO_RODA));
+		motorEsq.rotate(angulo, true);
 		motorDir.rotate(angulo);
 	}
 
@@ -35,55 +52,50 @@ public class Navegacao {
 		motorEsq.stop(true);
 		motorDir.stop();
 	}
-	
+
 	public static void ré() {
 		motorEsq.backward();
 		motorDir.backward();
 	}
-	
-	public static void virarEsq(){
+
+	public static void virarEsq(int ang) {
+		// gira o angulo necessario em uma roda e deixa a outra parada
+		motorEsq.stop(true);
+		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		resetarTacometro();
-		motorEsq.rotate(-100, true);
-		motorDir.rotate(100);
 	}
-	
-	public static void virarDir(){
+
+	public static void virarDir(int ang) {
+		// gira o angulo necessario em uma roda e deixa a outra parada
+		motorDir.stop(true);
+		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		resetarTacometro();
-		motorEsq.rotate(100, true);
-		motorDir.rotate(-100);
 	}
-	
-	public static void setVelocidade(int vel){
+
+	public static void setVelocidade(int vel) {
 		motorEsq.setSpeed(vel);
 		motorDir.setSpeed(vel);
 	}
-	
-	/*public static void retornar(){
-		virarEsq();
-		Delay.msDelay(5000);
-		setVelocidade(300);
-		andarFrente();
-		Delay.msDelay(2000);
-		parar();
+
+	private static void amostraToque() {
+		SampleProvider toque = sensorToque.getTouchMode();
+		float amostraToque[] = new float[toque.sampleSize()];
+		toque.fetchSample(amostraToque, 0);
+		if (amostraToque[0] == 1)
+			tocado = true;
+		else
+			tocado = false;
 	}
-	
-	public static void desviar(){
-		parar();
-		virarEsq();
-		setVelocidade(100);
-		andarFrente();
-		Delay.msDelay(2000);
-		parar();
-		virarDir();
-		parar();
-		andarFrente();
-		Delay.msDelay(3000);
-		parar();
-		virarDir();
-		parar();
-		andarFrente();
-		Delay.msDelay(2000);
-		virarEsq();
-	}*/
+
+	public static boolean getToque() {
+		return tocado;
+	}
+
+	@Override
+	public void run() {
+		while (!Button.ESCAPE.isDown()) {
+			amostraToque();
+		}
+	}
 
 }
