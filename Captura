@@ -23,6 +23,10 @@ public class Captura {
 		}
 	}
 	
+	public static boolean getGarraAberta(){
+		return garraAberta;
+	}
+	
 	private static void setVelMaxGarra(){
 		motorGarra.setSpeed(motorGarra.getMaxSpeed());
 	}
