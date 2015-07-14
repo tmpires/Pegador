@@ -3,16 +3,10 @@ import lejos.hardware.Sound;
 import lejos.utility.Delay;
 
 public class MainPegador {
-	private static final double RAIO_RODA = 0.028; // (metros)
-
 	public static void main(String[] args) {
-		Reconhecimento reconhecimento = new Reconhecimento();
-		Thread thReconhecimento = new Thread(reconhecimento);
-		thReconhecimento.start();
-		Sound.beepSequenceUp();
+		init();
 		while (!Button.ENTER.isDown()) {
-			System.out
-					.println("Verifique se a garra esta aberta e Aperte ENTER para inciar");
+			System.out.println("Aperte ENTER para inciar");
 		}
 
 		while (!Button.ESCAPE.isDown()) {
@@ -20,28 +14,43 @@ public class MainPegador {
 			Navegacao.setVelocidade(300);
 			Navegacao.andarFrente();
 
-			if (Reconhecimento.getDistancia() <= 0.2) {
+			if (Reconhecimento.getDistancia() <= 0.2 && Captura.getGarraAberta()) {
 				double distancia = Reconhecimento.getDistancia();
 				Navegacao.setVelocidade(100);
-				Navegacao
-						.andarGraus((int) (180 * (distancia - 0.05) / (Math.PI * RAIO_RODA)));
+				Navegacao.andarGraus(distancia);
+				//andar o quanto falta para chegar no alvo
 				Navegacao.parar();
-				Captura.fecharGarra();
-				if (!Reconhecimento.getPreto()) {
-					Button.LEDPattern(2);
-					Delay.msDelay(100);
-					Captura.abrirGarra();
-					System.exit(0);
-					// Navegacao.desviar();
+				if (Navegacao.getToque()) {
+					Navegacao.ré();
+					Delay.msDelay(1800);
+					Navegacao.virarEsq(87);
 				} else {
-					Button.LEDPattern(1);
-					Delay.msDelay(1000);
-					Captura.abrirGarra();
-					System.exit(0);
+					Captura.fecharGarra();
+					if (!Reconhecimento.getPreto()) {
+						Button.LEDPattern(2);
+						Delay.msDelay(100);
+						Captura.abrirGarra();
+					//	System.exit(0);
+					} else {
+						Button.LEDPattern(1);
+						Delay.msDelay(1000);
+					//	System.exit(0);
+					}
 				}
+
 			}
 
 		}
+		Captura.abrirGarra();
+	}
 
+	private static void init() {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Navegacao navegacao = new Navegacao();
+		Thread thNavegacao = new Thread(navegacao);
+		thNavegacao.start();
+		Sound.beepSequenceUp();
 	}
 }
