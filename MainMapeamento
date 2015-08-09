@@ -1,0 +1,167 @@
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
+
+public class MainMapeamento {
+	Navegacao navegacao = new Navegacao();
+	private static int numLinhas = 9;
+	private static int numColunas = 9;
+	private static int[][] Mapa = new int[numLinhas][numColunas];
+	private static int linha = 4;
+	private static int coluna = 0;
+
+	private static int naoMapeado = -1;
+	private static int vazio = 0;
+	private static int bonecoPreto = 1;
+	private static int bonecoBranco = 2;
+	private static int Parede = 3;
+	private static boolean virouEsq = false;
+
+	private static boolean estaNaParede = false;
+
+	public static void main(String[] args) {
+		inicializarMapa();
+		init();
+		while (!Navegacao.mudouDeSala) {
+			Navegacao.andarFrente();
+		}
+		Delay.msDelay(1500);
+		Navegacao.parar();
+		Navegacao.virarDuasRodasDir(85); // entra na pista e vira a direita
+
+		while (!Button.ESCAPE.isDown()) {
+			int conteudo = verificarConteudo();
+			if (Mapa[linha][coluna] == naoMapeado) {
+				Mapa[linha][coluna] = conteudo;
+				System.out.println("Celula: " + linha + " " + coluna);
+				System.out.println("Conteudo: " + Mapa[linha][coluna]);
+			}
+			Navegacao.andarFrente();
+			double distanciaPercorrida = Navegacao.getDistPercorrida();
+			if (distanciaPercorrida >= 0.2) {
+				// Navegacao.parar();
+				switch (Navegacao.ORIENTACAO[Navegacao.indiceOrientacao]) {
+				case Navegacao.LESTE:
+					linha++;
+					System.out.println("LESTE");
+					break;
+				case Navegacao.OESTE:
+					System.out.println("OESTE");
+					linha--;
+					break;
+				case Navegacao.NORTE:
+					coluna++;
+					System.out.println("NORTE");
+					Navegacao.parar();
+					// Se a ultima vez que virou foi a esquerda agora vira a
+					// direita
+					if (virouEsq) {
+						Navegacao.virarDuasRodasDir(85);
+						Navegacao.alinhar();
+						virouEsq = false;
+					} else {
+						Navegacao.virarDuasRodasEsq(85);
+						Navegacao.alinhar();
+						virouEsq = true;
+					}
+					break;
+				case Navegacao.SUL:
+					System.out.println("SUL");
+					Navegacao.parar();
+					Navegacao.virarDir(85);
+					coluna--;
+				default:
+					break;
+				}
+				if ((linha == 0 && Navegacao.ORIENTACAO[Navegacao.indiceOrientacao] == Navegacao.OESTE)
+						|| (linha == 8 && Navegacao.ORIENTACAO[Navegacao.indiceOrientacao] == Navegacao.LESTE)) {
+					estaNaParede = true;
+					Sound.beep();
+				}
+
+				if (estaNaParede) {
+					Navegacao.parar();
+					Navegacao.ré();
+					Delay.msDelay(800);
+					if (virouEsq) {
+						Navegacao.virarDuasRodasDir(85);
+						if (linha == 8 && coluna == 0)
+							Navegacao.alinhar();
+					} else {
+						Navegacao.virarDuasRodasEsq(85);
+					}
+					estaNaParede = false;
+				}
+				Navegacao.resetarTacometro();
+				Delay.msDelay(1000);
+			}
+		}
+		Navegacao.parar();
+		Captura.abrirGarra();
+	}
+
+	private static void inicializarMapa() {
+		for (int i = 0; i < numLinhas; i++) {
+			for (int j = 0; j < numColunas; j++) {
+				Mapa[i][j] = naoMapeado;
+			}
+		}
+	}
+
+	/*
+	 * private static int getProxCelula() { switch
+	 * (Navegacao.ORIENTACAO[Navegacao.indiceOrientacao]) { case
+	 * Navegacao.LESTE: return Mapa[linha + 1][coluna]; case Navegacao.OESTE:
+	 * return Mapa[linha - 1][coluna]; case Navegacao.NORTE: return
+	 * Mapa[linha][coluna + 1]; case Navegacao.SUL: return Mapa[linha][coluna -
+	 * 1]; default: return Mapa[linha][coluna]; } }
+	 */
+
+	private static int verificarConteudo() {
+		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta()) {
+			Navegacao.setVelocidade(100);
+			double distanciaBoneco = Reconhecimento.getDistancia();
+			Navegacao.andarGraus(distanciaBoneco - 0.05);
+			// andar o quanto falta para chegar no alvo
+			Navegacao.parar();
+			if (Navegacao.getToque() && !estaNaParede) {
+				return Parede;
+			} else {
+				Captura.fecharGarra();
+				if (!Reconhecimento.getPreto()) {
+					Button.LEDPattern(2);
+					Delay.msDelay(100);
+					// Captura.abrirGarra();
+					return bonecoBranco;
+					// System.exit(0);
+				} else {
+
+					Button.LEDPattern(1);
+					/*
+					 * Delay.msDelay(1000);
+					 */
+					return bonecoPreto;
+					// System.exit(0);
+				}
+			}
+		} else {
+			Navegacao.setVelocidade(350);
+			return vazio;
+		}
+	}
+	
+
+	private static void init() {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Navegacao navegacao = new Navegacao();
+		Thread thNavegacao = new Thread(navegacao);
+		thNavegacao.start();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+			System.out.println("Aperte ENTER para inciar");
+		}
+	}
+
+}
