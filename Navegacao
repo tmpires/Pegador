@@ -2,8 +2,10 @@ import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3TouchSensor;
 import lejos.robotics.SampleProvider;
+import lejos.utility.Delay;
 
 public class Navegacao implements Runnable {
 	private static EV3LargeRegulatedMotor motorEsq = new EV3LargeRegulatedMotor(
@@ -12,28 +14,27 @@ public class Navegacao implements Runnable {
 			MotorPort.C);
 	private static EV3TouchSensor sensorToque = new EV3TouchSensor(
 			SensorPort.S3);
+	private static EV3ColorSensor sensorCorChao = new EV3ColorSensor(
+			SensorPort.S4);
 	private static boolean tocado = false;
 	private static final double RAIO_RODA = 0.028; // metros
 	private static final double DISTANCIA_RODAS = 0.135; // metros
-	private static int tachoDir = motorDir.getTachoCount();
-	private static int tachoEsq = motorEsq.getTachoCount();
+
+	public static final int LESTE = 0;
+	public static final int NORTE = 1;
+	public static final int OESTE = 2;
+	public static final int SUL = 3;
+	public static final int[] ORIENTACAO = { LESTE, NORTE, OESTE, NORTE };
+	public static int indiceOrientacao = -1;
+	public static boolean mudouDeSala = false;
 
 	public Navegacao() {
 		resetarTacometro();
 	}
 
 	public static void andarFrente() {
-		tachoDir = motorDir.getTachoCount();
-		tachoEsq = motorEsq.getTachoCount();
-		if (tachoDir != tachoEsq) {
-			if (tachoDir > tachoEsq)
-				motorEsq.forward();
-			if (tachoEsq > tachoDir)
-				motorDir.forward();
-		} else {
-			motorEsq.forward();
-			motorDir.forward();
-		}
+		motorEsq.forward();
+		motorDir.forward();
 	}
 
 	public static void resetarTacometro() {
@@ -42,8 +43,8 @@ public class Navegacao implements Runnable {
 	}
 
 	public static void andarGraus(double distancia) {
-		// gira em cada roda o angulo necessario para chegar na distancia - 0.05
-		int angulo = (int) (180 * (distancia - 0.07) / (Math.PI * RAIO_RODA));
+		// gira em cada roda o angulo necessario para chegar na distancia
+		int angulo = (int) (180 * (distancia) / (Math.PI * RAIO_RODA));
 		motorEsq.rotate(angulo, true);
 		motorDir.rotate(angulo);
 	}
@@ -54,22 +55,57 @@ public class Navegacao implements Runnable {
 	}
 
 	public static void ré() {
+		setVelocidade(100);
 		motorEsq.backward();
 		motorDir.backward();
+	}
+	
+	public static void alinhar(){
+		setVelocidade(300);
+		motorEsq.backward();
+		motorDir.backward();
+		Delay.msDelay(2000);
+		parar();
 	}
 
 	public static void virarEsq(int ang) {
 		// gira o angulo necessario em uma roda e deixa a outra parada
+		setVelocidade(100);
 		motorEsq.stop(true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		resetarTacometro();
+		proximaDirecao();
 	}
 
 	public static void virarDir(int ang) {
 		// gira o angulo necessario em uma roda e deixa a outra parada
+		setVelocidade(100);
 		motorDir.stop(true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		resetarTacometro();
+		proximaDirecao();
+	}
+
+	public static void virarDuasRodasEsq(int ang) {
+		// gira o angulo necessario com uma roda pra frente e outra pra tras em
+		// torno do eixo do robo
+		setVelocidade(100);
+		motorEsq.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
+				true);
+		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		resetarTacometro();
+		proximaDirecao();
+	}
+
+	public static void virarDuasRodasDir(int ang) {
+		// gira o angulo necessario com uma roda pra frente e outra pra tras em
+		// torno do eixo do robo
+		setVelocidade(100);
+		motorDir.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
+				true);
+		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		resetarTacometro();
+		proximaDirecao();
 	}
 
 	public static void setVelocidade(int vel) {
@@ -77,14 +113,40 @@ public class Navegacao implements Runnable {
 		motorDir.setSpeed(vel);
 	}
 
-	private static void amostraToque() {
+	public static void setAceleracao(int acel) {
+		motorDir.setAcceleration(acel);
+		motorEsq.setAcceleration(acel);
+	}
+
+	public static double getDistPercorrida() {
+		double angEsq = motorEsq.getTachoCount();
+		double dist = RAIO_RODA * angEsq * (Math.PI / 180);
+		return dist;
+	}
+
+	private static void amostragem() {
 		SampleProvider toque = sensorToque.getTouchMode();
+		SampleProvider corChao = sensorCorChao.getColorIDMode();
 		float amostraToque[] = new float[toque.sampleSize()];
+		float amostraCorChao[] = new float[corChao.sampleSize()];
 		toque.fetchSample(amostraToque, 0);
+		corChao.fetchSample(amostraCorChao, 0);
 		if (amostraToque[0] == 1)
 			tocado = true;
 		else
 			tocado = false;
+
+		if (amostraCorChao[0] == 6)
+			mudouDeSala = false;
+		else if (amostraCorChao[0] == 7)
+			mudouDeSala = true;
+	}
+
+	private static void proximaDirecao() {
+		if (indiceOrientacao >= ORIENTACAO.length - 1) {
+			indiceOrientacao = 0;
+		} else
+			indiceOrientacao++;
 	}
 
 	public static boolean getToque() {
@@ -94,7 +156,7 @@ public class Navegacao implements Runnable {
 	@Override
 	public void run() {
 		while (!Button.ESCAPE.isDown()) {
-			amostraToque();
+			amostragem();
 		}
 	}
 
