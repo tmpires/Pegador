@@ -24,9 +24,10 @@ public class Navegacao implements Runnable {
 	public static final int NORTE = 1;
 	public static final int OESTE = 2;
 	public static final int SUL = 3;
-	public static final int[] ORIENTACAO = { LESTE, NORTE, OESTE, NORTE };
-	public static int indiceOrientacao = -1;
+	public static int orientacaoAtual = NORTE;
 	public static boolean mudouDeSala = false;
+	private static boolean virouEsq = false;
+	private static boolean virouDir = false;
 
 	public Navegacao() {
 		resetarTacometro();
@@ -59,8 +60,8 @@ public class Navegacao implements Runnable {
 		motorEsq.backward();
 		motorDir.backward();
 	}
-	
-	public static void alinhar(){
+
+	public static void alinhar() {
 		setVelocidade(300);
 		motorEsq.backward();
 		motorDir.backward();
@@ -73,6 +74,7 @@ public class Navegacao implements Runnable {
 		setVelocidade(100);
 		motorEsq.stop(true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
+		virouEsq = true;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -82,6 +84,7 @@ public class Navegacao implements Runnable {
 		setVelocidade(100);
 		motorDir.stop(true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
+		virouDir = true;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -93,6 +96,7 @@ public class Navegacao implements Runnable {
 		motorEsq.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
 				true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		virouEsq = true;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -104,6 +108,7 @@ public class Navegacao implements Runnable {
 		motorDir.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
 				true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		virouDir = true;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -142,11 +147,37 @@ public class Navegacao implements Runnable {
 			mudouDeSala = true;
 	}
 
-	private static void proximaDirecao() {
-		if (indiceOrientacao >= ORIENTACAO.length - 1) {
-			indiceOrientacao = 0;
-		} else
-			indiceOrientacao++;
+	public static void proximaDirecao() {
+		switch (orientacaoAtual) {
+		case NORTE:
+			if (virouEsq)
+				orientacaoAtual = OESTE;
+			else if (virouDir)
+				orientacaoAtual = LESTE;
+			break;
+		case SUL:
+			if (virouEsq)
+				orientacaoAtual = LESTE;
+			else if (virouDir)
+				orientacaoAtual = OESTE;
+			break;
+		case LESTE:
+			if (virouEsq)
+				orientacaoAtual = NORTE;
+			else if (virouDir)
+				orientacaoAtual = SUL;
+			break;
+		case OESTE:
+			if (virouEsq)
+				orientacaoAtual = SUL;
+			else if (virouDir)
+				orientacaoAtual = NORTE;
+			break;
+		default:
+			break;
+		}
+		virouEsq = false;
+		virouDir = false;
 	}
 
 	public static boolean getToque() {
