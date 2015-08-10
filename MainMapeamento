@@ -16,6 +16,7 @@ public class MainMapeamento {
 	private static int bonecoBranco = 2;
 	private static int Parede = 3;
 	private static boolean virouEsq = false;
+	private static boolean primeiraCurva = false;
 
 	private static boolean estaNaParede = false;
 
@@ -25,7 +26,7 @@ public class MainMapeamento {
 		while (!Navegacao.mudouDeSala) {
 			Navegacao.andarFrente();
 		}
-		Delay.msDelay(1500);
+		Delay.msDelay(1300);
 		Navegacao.parar();
 		Navegacao.virarDuasRodasDir(85); // entra na pista e vira a direita
 
@@ -73,6 +74,12 @@ public class MainMapeamento {
 				default:
 					break;
 				}
+				if(linha == 8 && coluna == 8){
+					Navegacao.parar();
+					Captura.abrirGarra();
+					System.exit(0);
+				}
+					
 				if ((linha == 0 && Navegacao.ORIENTACAO[Navegacao.indiceOrientacao] == Navegacao.OESTE)
 						|| (linha == 8 && Navegacao.ORIENTACAO[Navegacao.indiceOrientacao] == Navegacao.LESTE)) {
 					estaNaParede = true;
@@ -89,15 +96,18 @@ public class MainMapeamento {
 							Navegacao.alinhar();
 					} else {
 						Navegacao.virarDuasRodasEsq(85);
+						if(!primeiraCurva){
+							Navegacao.alinhar();
+							primeiraCurva = true;
+						}
 					}
 					estaNaParede = false;
 				}
 				Navegacao.resetarTacometro();
 				Delay.msDelay(1000);
 			}
+			
 		}
-		Navegacao.parar();
-		Captura.abrirGarra();
 	}
 
 	private static void inicializarMapa() {
@@ -118,13 +128,13 @@ public class MainMapeamento {
 	 */
 
 	private static int verificarConteudo() {
-		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta()) {
+		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta() && !estaNaParede) {
 			Navegacao.setVelocidade(100);
 			double distanciaBoneco = Reconhecimento.getDistancia();
 			Navegacao.andarGraus(distanciaBoneco - 0.05);
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
-			if (Navegacao.getToque() && !estaNaParede) {
+			if (Navegacao.getToque() /*&& !estaNaParede*/) {
 				return Parede;
 			} else {
 				Captura.fecharGarra();
