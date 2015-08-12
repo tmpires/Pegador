@@ -69,9 +69,9 @@ public class Navegacao implements Runnable {
 		parar();
 	}
 
-	public static void virarEsq(int ang) {
+	public static void virarEsq(int ang, int vel) {
 		// gira o angulo necessario em uma roda e deixa a outra parada
-		setVelocidade(100);
+		setVelocidade(vel);
 		motorEsq.stop(true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		virouEsq = true;
@@ -79,9 +79,9 @@ public class Navegacao implements Runnable {
 		proximaDirecao();
 	}
 
-	public static void virarDir(int ang) {
+	public static void virarDir(int ang, int vel) {
 		// gira o angulo necessario em uma roda e deixa a outra parada
-		setVelocidade(100);
+		setVelocidade(vel);
 		motorDir.stop(true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		virouDir = true;
@@ -89,10 +89,10 @@ public class Navegacao implements Runnable {
 		proximaDirecao();
 	}
 
-	public static void virarDuasRodasEsq(int ang) {
+	public static void virarDuasRodasEsq(int ang, int vel) {
 		// gira o angulo necessario com uma roda pra frente e outra pra tras em
 		// torno do eixo do robo
-		setVelocidade(100);
+		setVelocidade(vel);
 		motorEsq.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
 				true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
@@ -101,10 +101,10 @@ public class Navegacao implements Runnable {
 		proximaDirecao();
 	}
 
-	public static void virarDuasRodasDir(int ang) {
+	public static void virarDuasRodasDir(int ang, int vel) {
 		// gira o angulo necessario com uma roda pra frente e outra pra tras em
 		// torno do eixo do robo
-		setVelocidade(100);
+		setVelocidade(vel);
 		motorDir.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
 				true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
@@ -141,9 +141,9 @@ public class Navegacao implements Runnable {
 		else
 			tocado = false;
 
-		if (amostraCorChao[0] == 6)
+		if (amostraCorChao[0] == 6) //Branco
 			mudouDeSala = false;
-		else if (amostraCorChao[0] == 7)
+		else if (amostraCorChao[0] == 7) //Preto
 			mudouDeSala = true;
 	}
 
