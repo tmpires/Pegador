@@ -22,8 +22,6 @@ public class Astar {
 	 * @throws PathNotFoundException caminho não encontrado
 	 */
 	public List<Celula> search(Posicao inicio, Posicao fim) throws Exception {
-		
-
 		//Apagam os valores calculados do mapa e as listas
 		apagarMap(); 
 		listaAberta.clear();
@@ -33,7 +31,6 @@ public class Astar {
 		listaAberta.add(mapa[inicio.x][inicio.y]);
 		
 		while (listaAberta.size() > 0) {
-			
 			// Pega o menor f(x) para ir para o proximo
 			int indiceMenor = 0;
 			for (int i = 0; i < listaAberta.size(); i++) {
@@ -42,14 +39,12 @@ public class Astar {
 				}
 			}
 			Celula noAtual = listaAberta.get(indiceMenor);
-
-
 			// Fim -- o resultado foi encontrado, retorne o caminho encontrado
 			if (noAtual == mapa[fim.x][fim.y]) {
 				Celula atual = noAtual;
 				Stack<Celula> ret = new Stack<Celula>();
 				while (atual.parent != null) {
-					
+					System.out.println(atual.toString());
 					ret.push(atual);
 					atual = atual.parent;
 				}
