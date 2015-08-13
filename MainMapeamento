@@ -1,4 +1,5 @@
 import java.util.List;
+
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.utility.Delay;
@@ -12,7 +13,7 @@ public class MainMapeamento {
 	private static int coluna = 0;
 	private static Posicao inicio = new Posicao(linha, coluna);
 
-	//private static int naoMapeado = -1;
+	// private static int naoMapeado = -1;
 	private static int vazio = 0;
 	private static int bonecoPreto = 1;
 	private static int bonecoBranco = 2;
@@ -25,12 +26,19 @@ public class MainMapeamento {
 	private static boolean celulaDir = false;
 	private static boolean celulaBaixo = false;
 	private static boolean celulaCima = false;
-	private static boolean retornando = false;
+	private static boolean resgatando = false;
+	private static boolean retornandoMapeamento = false;
+	private static int velocidadeMaior = 400;
+	private static int velocidadeMenor = 200;
+	private static int angRetoMaior = 95;
+	private static int angRetoMenor = 85;
+	private static int angRasoMaior = 185;
+	private static int angRasoMenor = 180;
 
 	public static void main(String[] args) throws Exception {
 		init();
 		inicializarMapa();
-		while (!Navegacao.mudouDeSala) {
+		while (!Navegacao.mudouDeSala && !Button.ESCAPE.isDown()) {
 			Navegacao.andarFrente();
 		}
 		Delay.msDelay(1300);
@@ -47,11 +55,10 @@ public class MainMapeamento {
 					Navegacao.parar();
 					Delay.msDelay(1000);
 					Mapa[linha][coluna].setOccupied(false);
-					retornando = true;
-					retornar(Mapa, inicio);
+					resgatando = true;
+					retornar(inicio);
 				}
-				System.out.println("Celula: " + linha + " " + coluna);
-				System.out.println("Conteudo " + conteudo);
+				System.out.println("[" + linha + ", " + coluna + "]");
 			}
 			Navegacao.andarFrente();
 			double distanciaPercorrida = Navegacao.getDistPercorrida();
@@ -77,7 +84,7 @@ public class MainMapeamento {
 			Navegacao.parar();
 			// Se a ultima vez que virou foi a esquerda agora vira a
 			// direita
-			if (!retornando) {
+			if (!resgatando && !retornandoMapeamento) {
 				if (virouEsq) {
 					Navegacao.virarDuasRodasDir(85, 100);
 					Navegacao.alinhar();
@@ -90,12 +97,20 @@ public class MainMapeamento {
 			}
 			break;
 		case Navegacao.SUL:
-			System.out.println("SUL");
-			if (!retornando) {
-				Navegacao.parar();
-				Navegacao.virarDir(85, 100);
-			}
 			coluna--;
+			System.out.println("SUL");
+			if (!resgatando && !retornandoMapeamento) {
+				if (virouEsq) {
+					Navegacao.virarDuasRodasDir(85, 100);
+					Navegacao.alinhar();
+					virouEsq = false;
+				} else {
+					Navegacao.virarDuasRodasEsq(85, 100);
+					Navegacao.alinhar();
+					virouEsq = true;
+				}
+			}
+			break;
 		default:
 			break;
 		}
@@ -111,8 +126,11 @@ public class MainMapeamento {
 				|| (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.SUL)) {
 			estaNaParede = true;
 			Sound.beep();
+		} else {
+			estaNaParede = false;
 		}
-		if (estaNaParede) {
+
+		if (estaNaParede && !resgatando) {
 			Navegacao.parar();
 			Navegacao.ré();
 			Delay.msDelay(800);
@@ -152,26 +170,33 @@ public class MainMapeamento {
 	 */
 
 	private static int verificarConteudo() {
-		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta()
+		if (Reconhecimento.getDistancia() <= 0.25 && Captura.getGarraAberta()) {
+			// Se houver algo a 25 cm reduz velocidade
+			Navegacao.setAceleracao(-5000);
+		} else {
+			// Se não acelera!!!
+			Navegacao.setAceleracao(5000);
+		}
+
+		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta() 
 				&& !estaNaParede) {
-			Navegacao.setVelocidade(100);
+			//se houver algo alem da parede a 15 cm
+			Navegacao.setVelocidade(velocidadeMenor);
 			double distanciaBoneco = Reconhecimento.getDistancia();
 			Navegacao.andarGraus(distanciaBoneco - 0.05);
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
-			if (Navegacao.getToque() /* && !estaNaParede */) {
+			if (Navegacao.getToque()) {
 				Mapa[linha][coluna].setChecked(true);
 				return Parede;
 			} else {
 				Captura.fecharGarra();
 				if (!Reconhecimento.getPreto()) {
 					Button.LEDPattern(2);
-					Delay.msDelay(100);
 					Captura.abrirGarra();
 					Delay.msDelay(2000);
 					Mapa[linha][coluna].setChecked(true);
 					return bonecoBranco;
-
 				} else {
 					Button.LEDPattern(1);
 					Mapa[linha][coluna].setChecked(true);
@@ -179,123 +204,249 @@ public class MainMapeamento {
 				}
 			}
 		} else {
-			Navegacao.setVelocidade(350);
+			Navegacao.setVelocidade(velocidadeMaior);
 			Mapa[linha][coluna].setChecked(true);
 			return vazio;
 		}
 	}
 
 	private static Posicao ultMapeada;
+	private static Posicao atual;
+	private static int ultOrientacao;
 
-	private static void retornar(Celula[][] mapa, Posicao objetivo)
-			throws Exception {
-		Astar aStar = new Astar(mapa);
-		ultMapeada = mapa[linha][coluna].getPosicao();
-
-		List<Celula> caminho = aStar.search(mapa[linha][coluna].getPosicao(),
+	private static void retornar(Posicao objetivo) throws Exception {
+		Astar aStar = new Astar(Mapa);
+		atual = Mapa[linha][coluna].getPosicao();
+		
+		if(resgatando){
+			ultMapeada = atual;
+			ultOrientacao = Navegacao.orientacaoAtual;
+		}
+			
+		List<Celula> caminho = aStar.search(Mapa[linha][coluna].getPosicao(),
 				objetivo);
-		for (int i = (caminho.size() - 1); i >= 0; i--) {
-			if (caminho.get(i).getPosicao().y == Mapa[linha][coluna]
-					.getPosicao().y) {
-				if (caminho.get(i).getPosicao().x < Mapa[linha][coluna]
-						.getPosicao().x) {
+		// Percorre o menor caminho encontrado
+		for (int i = 0; i < caminho.size(); i++) {
+			System.out.println(caminho.get(i).getPosicao().toString());
+			if (caminho.get(i).getPosicao().y == atual.y) {
+				if (caminho.get(i).getPosicao().x < atual.x) {
 					celulaEsq = true;
+					System.out.println("ESQUERDA");
 					celulaDir = false;
 					celulaCima = false;
 					celulaBaixo = false;
 				} else {
 					celulaDir = true;
+					System.out.println("DIREITA");
 					celulaEsq = false;
 					celulaCima = false;
 					celulaBaixo = false;
 				}
-			} else if (caminho.get(i).getPosicao().y < Mapa[linha][coluna]
-					.getPosicao().y) {
-				celulaBaixo = true;
-				celulaDir = false;
-				celulaEsq = false;
-				celulaCima = false;
+			} else if (caminho.get(i).getPosicao().x == atual.x) {
+				if (caminho.get(i).getPosicao().y < atual.y) {
+					celulaBaixo = true;
+					System.out.println("BAIXO");
+					celulaDir = false;
+					celulaEsq = false;
+					celulaCima = false;
+				} else {
+					celulaCima = true;
+					System.out.println("CIMA");
+					celulaDir = false;
+					celulaEsq = false;
+					celulaBaixo = false;
+				}
 			} else {
-				celulaCima = true;
-				celulaDir = false;
-				celulaEsq = false;
-				celulaBaixo = false;
+				Sound.beep();
+				System.exit(0);
 			}
-			Navegacao.parar();
-			System.out.println(Mapa[linha][coluna].getPosicao().toString());
-			System.out.println(Navegacao.orientacaoAtual);
-			System.out.println("OBJETIVO: "+objetivo.toString());
-			Delay.msDelay(2000);
-			
-			fazerManobra();
-			
+			fazerManobra(); // Faz a manobra necessaria para ir à celula
+							// desejada
 			Navegacao.setVelocidade(350);
 			Navegacao.andarFrente();
 			double distanciaPercorrida = Navegacao.getDistPercorrida();
 			while (distanciaPercorrida <= 0.2)
 				distanciaPercorrida = Navegacao.getDistPercorrida();
+			atual = caminho.get(i).getPosicao();
 			atualizarCelulas();
 		}
-		Navegacao.parar();
-		Captura.abrirGarra();
-		if (retornando) {
-			retornando = false;
-			retornar(Mapa, ultMapeada);
+		if (resgatando) {
+			deixarBonecoDestino();
+			resgatando = false;
+			retornandoMapeamento = true;
+			retornar(ultMapeada);
+			retornandoMapeamento = false;
+			 if(Navegacao.orientacaoAtual != ultOrientacao){
+				 retornarUltOrientacao();
+			 }
 		}
 	}
 	
-	private static void fazerManobra(){
+	private static void retornarUltOrientacao() {
+		
+	}
+
+	private static void deixarBonecoDestino() {
+		switch (Navegacao.orientacaoAtual) {
+		case Navegacao.LESTE:
+			Navegacao.virarDuasRodasDir(angRetoMaior, velocidadeMenor);
+			break;
+		case Navegacao.OESTE:
+			Navegacao.virarDuasRodasEsq(angRetoMaior, velocidadeMenor);
+			break;
+		default:
+			break;
+		}
+		Navegacao.setVelocidade(velocidadeMenor);
+		Navegacao.andarFrente();
+		Delay.msDelay(3000);
+		Navegacao.parar();
+		Captura.abrirGarra();
+		Navegacao.ré();
+		Delay.msDelay(3000);
+		Navegacao.resetarTacometro();
+	}
+
+	private static void fazerManobra() {
 		switch (Navegacao.orientacaoAtual) {
 		case Navegacao.LESTE:
 			if (celulaEsq) {
-				Navegacao.virarDuasRodasEsq(180, 200);
-				Navegacao.proximaDirecao(); // Gambiarra para que a
-											// orientacao seja ajustada
+				Navegacao.parar();
+				if (resgatando) {
+					if (coluna == 0)
+						Navegacao.virarDuasRodasEsq(angRasoMaior,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasDir(angRasoMaior,
+								velocidadeMenor);
+				} else {
+					if (coluna == 0)
+						Navegacao.virarDuasRodasEsq(angRasoMenor,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasDir(angRasoMenor,
+								velocidadeMenor);
+				}
+				Navegacao.orientacaoAtual = Navegacao.OESTE;
 			} else if (celulaDir) {
-				Navegacao.setVelocidade(350);
+				Navegacao.setVelocidade(velocidadeMaior);
 				Navegacao.andarFrente();
 			} else if (celulaCima) {
-				Navegacao.virarDuasRodasEsq(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasEsq(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasEsq(angRetoMenor, velocidadeMenor);
 			} else if (celulaBaixo) {
-				Navegacao.virarDuasRodasDir(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasDir(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasDir(angRetoMenor, velocidadeMenor);
 			}
 			break;
 		case Navegacao.OESTE:
 			if (celulaEsq) {
-				Navegacao.setVelocidade(350);
+				Navegacao.setVelocidade(velocidadeMaior);
 				Navegacao.andarFrente();
 			} else if (celulaDir) {
-				Navegacao.virarDuasRodasEsq(180, 200);
-				Navegacao.proximaDirecao();
+				Navegacao.parar();
+				if (resgatando) {
+					if (coluna == 0)
+						Navegacao.virarDuasRodasDir(angRasoMaior,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasEsq(angRasoMaior,
+								velocidadeMenor);
+				} else {
+					if (coluna == 0)
+						Navegacao.virarDuasRodasDir(angRasoMenor,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasEsq(angRasoMenor,
+								velocidadeMenor);
+				}
+				Navegacao.orientacaoAtual = Navegacao.LESTE;
 			} else if (celulaCima) {
-				Navegacao.virarDuasRodasDir(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasDir(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasDir(angRetoMenor, velocidadeMenor);
 			} else if (celulaBaixo) {
-				Navegacao.virarDuasRodasEsq(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasEsq(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasEsq(angRetoMenor, velocidadeMenor);
 			}
 			break;
 		case Navegacao.NORTE:
 			if (celulaEsq) {
-				Navegacao.virarDuasRodasEsq(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasEsq(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasEsq(angRetoMenor, velocidadeMenor);
 			} else if (celulaDir) {
-				Navegacao.virarDuasRodasDir(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasDir(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasDir(angRetoMenor, velocidadeMenor);
 			} else if (celulaCima) {
-				Navegacao.setVelocidade(350);
+				Navegacao.setVelocidade(velocidadeMaior);
 				Navegacao.andarFrente();
 			} else if (celulaBaixo) {
-				Navegacao.virarDuasRodasEsq(180, 200);
-				Navegacao.proximaDirecao();
+				Navegacao.parar();
+				if (resgatando) {
+					if (linha == 0)
+						Navegacao.virarDuasRodasDir(angRasoMaior,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasEsq(angRasoMaior,
+								velocidadeMenor);
+				} else {
+					if (linha == 0)
+						Navegacao.virarDuasRodasDir(angRasoMenor,
+								velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasEsq(angRasoMenor,
+								velocidadeMenor);
+
+				}
+				Navegacao.orientacaoAtual = Navegacao.SUL;
 			}
 			break;
 		case Navegacao.SUL:
 			if (celulaEsq) {
-				Navegacao.virarDuasRodasDir(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasDir(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasDir(angRetoMenor, velocidadeMenor);
 			} else if (celulaDir) {
-				Navegacao.virarDuasRodasEsq(92, 200);
+				Navegacao.parar();
+				if (resgatando)
+					Navegacao.virarDuasRodasEsq(angRetoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasEsq(angRetoMenor, velocidadeMenor);
 			} else if (celulaCima) {
-				Navegacao.virarDuasRodasEsq(180, 200);
-				Navegacao.proximaDirecao();
+				Navegacao.parar();
+			 if(resgatando){	
+				if (linha == 0)
+					Navegacao.virarDuasRodasEsq(angRasoMaior, velocidadeMenor);
+				else
+					Navegacao.virarDuasRodasDir(angRasoMaior, velocidadeMenor);
+			 } else {
+				 if (linha == 0)
+						Navegacao.virarDuasRodasEsq(angRasoMenor, velocidadeMenor);
+					else
+						Navegacao.virarDuasRodasDir(angRasoMenor, velocidadeMenor);
+			 }
+				Navegacao.orientacaoAtual = Navegacao.NORTE;
 			} else if (celulaBaixo) {
-				Navegacao.setVelocidade(350);
+				Navegacao.setVelocidade(velocidadeMaior);
 				Navegacao.andarFrente();
 			}
 			break;
