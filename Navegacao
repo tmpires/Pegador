@@ -17,9 +17,10 @@ public class Navegacao implements Runnable {
 	private static EV3ColorSensor sensorCorChao = new EV3ColorSensor(
 			SensorPort.S4);
 	private static boolean tocado = false;
-	private static final double RAIO_RODA = 0.028; // metros
+	private static final double RAIO_RODA = 0.026; // metros
 	private static final double DISTANCIA_RODAS = 0.135; // metros
-
+	private static int velocidadeMenor = 100;
+	private static int angCurva = 80;
 	public static final int LESTE = 0;
 	public static final int NORTE = 1;
 	public static final int OESTE = 2;
@@ -28,11 +29,10 @@ public class Navegacao implements Runnable {
 	public static boolean mudouDeSala = false;
 	private static boolean virouEsq = false;
 	private static boolean virouDir = false;
-
 	public Navegacao() {
 		resetarTacometro();
 	}
-
+	
 	public static void andarFrente() {
 		motorEsq.forward();
 		motorDir.forward();
@@ -65,8 +65,65 @@ public class Navegacao implements Runnable {
 		setVelocidade(300);
 		motorEsq.backward();
 		motorDir.backward();
-		Delay.msDelay(2000);
+		Delay.msDelay(1000);
 		parar();
+	}
+
+	public static void virarParede() {
+		parar();
+		ré();
+		Delay.msDelay(800);
+		if (!virouDir) {
+			virarDuasRodasDir(angCurva, velocidadeMenor);
+		} else if (!virouEsq) {
+			virarDuasRodasEsq(angCurva, velocidadeMenor);
+		}
+	}
+	
+	public static void virarParedeMesmaColuna(){
+		parar();
+		ré();
+		Delay.msDelay(800);
+		if (!virouDir) {
+			virarDuasRodasDir(angCurva, velocidadeMenor);
+			virarDuasRodasDir(angCurva, velocidadeMenor);
+		} else if (!virouEsq) {
+			virarDuasRodasEsq(angCurva, velocidadeMenor);
+			virarDuasRodasEsq(angCurva, velocidadeMenor);
+		}
+	}
+	
+	public static void virarZigZag() {
+		Navegacao.parar();
+		//if (!inverterNavegacao) {
+			if (orientacaoAtual == NORTE) {
+				if (virouDir) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			} else if (orientacaoAtual == SUL) {
+				if (virouEsq) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			}
+		/*} else {
+			if (orientacaoAtual == LESTE) {
+				if (virouDir) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			} else if (orientacaoAtual == OESTE) {
+				if (virouEsq) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			}
+		}*/
 	}
 
 	public static void virarEsq(int ang, int vel) {
@@ -75,6 +132,7 @@ public class Navegacao implements Runnable {
 		motorEsq.stop(true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		virouEsq = true;
+		virouDir = false;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -85,6 +143,7 @@ public class Navegacao implements Runnable {
 		motorDir.stop(true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
 		virouDir = true;
+		virouEsq = false;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -97,6 +156,7 @@ public class Navegacao implements Runnable {
 				true);
 		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
 		virouEsq = true;
+		virouDir = false;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -109,6 +169,7 @@ public class Navegacao implements Runnable {
 				true);
 		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
 		virouDir = true;
+		virouEsq = false;
 		resetarTacometro();
 		proximaDirecao();
 	}
@@ -141,9 +202,9 @@ public class Navegacao implements Runnable {
 		else
 			tocado = false;
 
-		if (amostraCorChao[0] == 6) //Branco
+		if (amostraCorChao[0] == 6) // Branco
 			mudouDeSala = false;
-		else if (amostraCorChao[0] == 7) //Preto
+		else if (amostraCorChao[0] == 7) // Preto
 			mudouDeSala = true;
 	}
 
@@ -176,8 +237,6 @@ public class Navegacao implements Runnable {
 		default:
 			break;
 		}
-		virouEsq = false;
-		virouDir = false;
 	}
 
 	public static boolean getToque() {
