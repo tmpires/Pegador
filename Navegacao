@@ -67,15 +67,16 @@ public class Navegacao implements Runnable {
 		motorDir.backward();
 		Delay.msDelay(1000);
 		parar();
+		resetarTacometro();
 	}
 
 	public static void virarParede() {
 		parar();
 		ré();
 		Delay.msDelay(800);
-		if (!virouDir) {
+		if (orientacaoAtual == OESTE) {
 			virarDuasRodasDir(angCurva, velocidadeMenor);
-		} else if (!virouEsq) {
+		} else if (orientacaoAtual == LESTE) {
 			virarDuasRodasEsq(angCurva, velocidadeMenor);
 		}
 	}
@@ -95,7 +96,6 @@ public class Navegacao implements Runnable {
 	
 	public static void virarZigZag() {
 		Navegacao.parar();
-		//if (!inverterNavegacao) {
 			if (orientacaoAtual == NORTE) {
 				if (virouDir) {
 					virarDuasRodasDir(angCurva, velocidadeMenor);
@@ -109,21 +109,6 @@ public class Navegacao implements Runnable {
 					virarDuasRodasEsq(angCurva, velocidadeMenor);
 				}
 			}
-		/*} else {
-			if (orientacaoAtual == LESTE) {
-				if (virouDir) {
-					virarDuasRodasDir(angCurva, velocidadeMenor);
-				} else {
-					virarDuasRodasEsq(angCurva, velocidadeMenor);
-				}
-			} else if (orientacaoAtual == OESTE) {
-				if (virouEsq) {
-					virarDuasRodasDir(angCurva, velocidadeMenor);
-				} else {
-					virarDuasRodasEsq(angCurva, velocidadeMenor);
-				}
-			}
-		}*/
 	}
 
 	public static void virarEsq(int ang, int vel) {
