@@ -17,7 +17,7 @@ public class MainPegador {
 		}
 		Delay.msDelay(1300);
 		Navegacao.parar();
-		Navegacao.virarDuasRodasDir(80, 100);
+		Navegacao.virarDuasRodasDir(85, 100);
 		// entra na pista e vira a direita
 		while (!Button.ESCAPE.isDown()) {
 			Mapeamento.checarCelulas();
