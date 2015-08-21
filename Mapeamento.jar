@@ -18,7 +18,7 @@ public class Mapeamento {
 	// private static int naoMapeado = -1;
 	public static int vazio = 0;
 	public static int bonecoPreto = 1;
-	public static int bonecoBranco = 2;
+	public static int bonecoNaoPreto = 2;
 	public static int Parede = 3;
 	public static boolean virouEsq = false;
 	public static boolean primeiraCurva = true;
@@ -34,6 +34,7 @@ public class Mapeamento {
 	private static int velocidadeMenor = 100;
 	private static int angCurva = 80;
 	private static boolean desviando;
+	private static boolean podeAlinhar;
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -41,28 +42,25 @@ public class Mapeamento {
 	 */
 
 	public static void checarCelulas() throws Exception {
-		if (!Mapa[linha][coluna].isChecked()) {
-			int conteudo = verificarConteudo();
-			if (conteudo == vazio) {
-				Mapa[linha][coluna].setOccupied(false);
-			}
-			if (conteudo == bonecoPreto) {
-				Navegacao.parar();
-				Delay.msDelay(1000);
-				Mapa[linha][coluna].setOccupied(false);
-				resgatando = true;
-				retornar(inicio);
-			} else if (conteudo == bonecoBranco) {
-				Navegacao.parar();
-				Captura.abrirGarra();
-				Navegacao.ré();
-				Delay.msDelay(1500);
-				desviando = true;
-				contornarCelula(Mapa[linha][coluna].getPosicao());
-				desviando = false;
-				Navegacao.setVelocidade(velocidadeMaior);
-			}
-			System.out.println("[" + linha + ", " + coluna + "]");
+		int conteudo = verificarConteudo();
+		if (conteudo == vazio) {
+			Mapa[linha][coluna].setOccupied(false);
+		}
+		if (conteudo == bonecoPreto) {
+			Navegacao.parar();
+			Delay.msDelay(1000);
+			Mapa[linha][coluna].setOccupied(false);
+			resgatando = true;
+			retornar(inicio);
+		} else if (conteudo == bonecoNaoPreto) {
+			Navegacao.parar();
+			Captura.abrirGarra();
+			Navegacao.ré();
+			Delay.msDelay(1500);
+			desviando = true;
+			contornarCelula(Mapa[linha][coluna].getPosicao());
+			desviando = false;
+			Navegacao.setVelocidade(velocidadeMaior);
 		}
 	}
 
@@ -98,7 +96,7 @@ public class Mapeamento {
 		default:
 			break;
 		}
-
+		System.out.println("[" + linha + ", " + coluna + "]");
 		if (linha == 8 && coluna == 8) {
 			Navegacao.parar();
 			Captura.abrirGarra();
@@ -118,11 +116,16 @@ public class Mapeamento {
 		if ((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
 				|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.OESTE)
 				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL)
-				|| (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))
+				|| (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE)) {
+			podeAlinhar = true;
 			Navegacao.alinhar();
+		} else {
+			podeAlinhar = false;
+		}
+			
 
 		if (estaNaParede && !resgatando) {
-			if(desviando){
+			if (desviando) {
 				Navegacao.virarParedeMesmaColuna();
 				Navegacao.alinhar();
 			} else {
@@ -135,7 +138,6 @@ public class Mapeamento {
 		}
 		Navegacao.resetarTacometro();
 	}
-
 	/**
 	 * verificar o que há na celula
 	 * 
@@ -154,6 +156,7 @@ public class Mapeamento {
 			if (Navegacao.getToque()) {
 				Mapa[linha][coluna].setChecked(true);
 				Mapa[linha][coluna].setOccupied(true);
+				Button.LEDPattern(4);
 				return Parede;
 			} else {
 				Captura.fecharGarra();
@@ -161,7 +164,7 @@ public class Mapeamento {
 					Button.LEDPattern(2);
 					Mapa[linha][coluna].setChecked(true);
 					Mapa[linha][coluna].setOccupied(true);
-					return bonecoBranco;
+					return bonecoNaoPreto;
 				} else {
 					Button.LEDPattern(1);
 					Mapa[linha][coluna].setChecked(true);
@@ -171,6 +174,7 @@ public class Mapeamento {
 		} else {
 			Navegacao.setVelocidade(velocidadeMaior);
 			Mapa[linha][coluna].setChecked(true);
+			Button.LEDPattern(0);
 			return vazio;
 		}
 	}
@@ -188,6 +192,14 @@ public class Mapeamento {
 		}
 	}
 
+	/*
+	 * private static Celula getProxCelula() { switch
+	 * (Navegacao.orientacaoAtual) { case Navegacao.LESTE: return Mapa[linha +
+	 * 1][coluna]; case Navegacao.OESTE: return Mapa[linha - 1][coluna]; case
+	 * Navegacao.NORTE: return Mapa[linha][coluna + 1]; case Navegacao.SUL:
+	 * return Mapa[linha][coluna - 1]; default: return Mapa[linha][coluna]; } }
+	 */
+
 	private static void contornarCelula(Posicao posicao) throws Exception {
 		resetarProxCelulas();
 		switch (Navegacao.orientacaoAtual) {
@@ -195,7 +207,7 @@ public class Mapeamento {
 			// virar para a celula de baixo ou de cima
 			if (posicao.y < numColunas-1)
 				celulaCima = true;
-			else
+			else 
 				celulaBaixo = true;
 			fazerManobra();
 			irProximaCelula();
@@ -259,9 +271,9 @@ public class Mapeamento {
 				if (!estaNaParede) {
 					// virar para celula de cima ou de baixo
 					if (posicao.y < numColunas-1)
-						celulaCima = true;
-					else
 						celulaBaixo = true;
+					else
+						celulaCima = true;
 					fazerManobra();
 					irProximaCelula();
 					checarCelulas();
@@ -272,12 +284,58 @@ public class Mapeamento {
 					fazerManobra();
 					resetarProxCelulas();
 				}
-			} 
+			}
+		break;
+		case Navegacao.NORTE:
+			//ir para esquerda ou direita
+			if(posicao.x > 0 && !Mapa[linha-1][coluna].isOccupied())
+				celulaEsq = true;
+			else 
+				celulaDir = false;
+			fazerManobra();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			resetarProxCelulas();
+			//ir para cima
+			celulaCima = true;
+			fazerManobra();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			resetarProxCelulas();
+			if (!estaNaParede) {
+				// ir para frente
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				resetarProxCelulas();
+				if (!estaNaParede) {
+					// ir para esquerda ou direita
+					if (posicao.x > 0)
+						celulaDir = true;
+					else
+						celulaEsq = true;
+					fazerManobra();
+					irProximaCelula();
+					checarCelulas();
+					atualizarCelulas();
+					resetarProxCelulas();
+					// ir para cima
+					celulaCima = true;
+					fazerManobra();
+					resetarProxCelulas();
+				}
+			}
+			break;
+			
+		case Navegacao.SUL:
+			break;
 		}
 	}
 
 	/**
-	 * Retorna para a posicao desejada
+	 * Retorna para a posicao desejada, pelo menor caminho possível
 	 * 
 	 * @param Posicao
 	 *            objetivo
@@ -296,7 +354,6 @@ public class Mapeamento {
 		// Percorre o menor caminho encontrado
 		for (int i = 0; i < caminho.size(); i++) {
 			atual = Mapa[linha][coluna].getPosicao();
-			System.out.println(caminho.get(i).getPosicao().toString());
 			resetarProxCelulas();
 			if (caminho.get(i).getPosicao().y == atual.y) {
 				if (caminho.get(i).getPosicao().x < atual.x) {
@@ -316,6 +373,9 @@ public class Mapeamento {
 			}
 			fazerManobra(); // Faz a manobra necessaria para ir à celula
 							// desejada
+			if (podeAlinhar)
+				Navegacao.alinhar();
+
 			irProximaCelula();
 			atualizarCelulas();
 		}
@@ -325,9 +385,8 @@ public class Mapeamento {
 			retornandoMapeamento = true;
 			retornar(ultMapeada);
 			retornandoMapeamento = false;
-			if (Navegacao.orientacaoAtual != ultOrientacao) {
+			if (Navegacao.orientacaoAtual != ultOrientacao) 
 				retornarUltOrientacao();
-			}
 		}
 	}
 
@@ -340,6 +399,7 @@ public class Mapeamento {
 		double distanciaPercorrida = Navegacao.getDistPercorrida();
 		while (distanciaPercorrida <= tamanhoDaCelula)
 			distanciaPercorrida = Navegacao.getDistPercorrida();
+		Navegacao.resetarTacometro();
 	}
 
 	/**
