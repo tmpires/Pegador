@@ -1,0 +1,55 @@
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
+
+public class MainPegador2 {
+	Navegacao2 navegacao = new Navegacao2();
+
+	public static void main(String[] args) throws Exception {
+		init();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+			System.out.println("Aperte ENTER para inciar");
+		}
+		Mapeamento2.inicializarMapa();
+
+		while (!Navegacao2.mudouDeSala)
+			Navegacao2.andarFrente();
+		Delay.msDelay(1000);
+		Mapeamento2.atualizarSala();
+		while (Mapeamento2.salaAtual != Mapeamento2.SALAPERIFERICA) {
+			Mapeamento2.irProximaCelula();
+			Mapeamento2.checarCelulas();
+			Mapeamento2.atualizarCelulas();
+			if (Navegacao2.mudouDeSala)
+				Mapeamento2.atualizarSala();
+		}
+
+		while (!Button.UP.isDown()) {
+			Navegacao2.parar();
+			System.out.println("APERTE CIMA PARA RETORNAR");
+		}
+		Navegacao2.andarFrente();
+		Delay.msDelay(500);
+		Navegacao2.parar();
+		Navegacao2.virarDuasRodasDir(85, 100);
+		// entra na pista e vira a direita
+		Mapeamento2.setMapearZigZag(true);
+		while (!Button.ESCAPE.isDown()) {
+			Mapeamento2.checarCelulas();
+			Mapeamento2.irProximaCelula();
+			Mapeamento2.atualizarCelulas();
+		}
+		Captura2.abrirGarra();
+		System.exit(0);
+	}
+
+	private static void init() {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Navegacao2 navegacao = new Navegacao2();
+		Thread thNavegacao = new Thread(navegacao);
+		thNavegacao.start();
+	}
+}
