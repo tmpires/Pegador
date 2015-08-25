@@ -1,0 +1,34 @@
+import lejos.hardware.motor.EV3MediumRegulatedMotor;
+import lejos.hardware.port.MotorPort;
+
+
+public class Captura2 {
+	private static boolean garraAberta = true;
+	private static EV3MediumRegulatedMotor motorGarra = new EV3MediumRegulatedMotor(
+			MotorPort.A);
+	
+	public static void abrirGarra(){
+		setVelMaxGarra();
+		if(!garraAberta){
+			motorGarra.rotate(-100);
+			garraAberta = true;
+		} 
+	}
+	
+	public static void fecharGarra(){
+		setVelMaxGarra();
+		if(garraAberta){
+			motorGarra.rotate(100);
+			garraAberta = false;
+		}
+	}
+	
+	public static boolean getGarraAberta(){
+		return garraAberta;
+	}
+	
+	private static void setVelMaxGarra(){
+		motorGarra.setSpeed(200);
+	}
+
+}
