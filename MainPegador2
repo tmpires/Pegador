@@ -12,23 +12,11 @@ public class MainPegador2 {
 			System.out.println("Aperte ENTER para inciar");
 		}
 		Mapeamento2.inicializarMapa();
-
-		while (!Navegacao2.mudouDeSala)
-			Navegacao2.andarFrente();
-		Delay.msDelay(1000);
+		Navegacao2.irProxSala();
+		//entrar sala central
 		Mapeamento2.atualizarSala();
-		while (Mapeamento2.salaAtual != Mapeamento2.SALAPERIFERICA) {
-			Mapeamento2.irProximaCelula();
-			Mapeamento2.checarCelulas();
-			Mapeamento2.atualizarCelulas();
-			if (Navegacao2.mudouDeSala)
-				Mapeamento2.atualizarSala();
-		}
-
-		while (!Button.UP.isDown()) {
-			Navegacao2.parar();
-			System.out.println("APERTE CIMA PARA RETORNAR");
-		}
+		
+		Mapeamento2.irPerifericaDireita();
 		Navegacao2.andarFrente();
 		Delay.msDelay(500);
 		Navegacao2.parar();
