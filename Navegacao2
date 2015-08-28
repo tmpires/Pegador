@@ -27,8 +27,8 @@ public class Navegacao2 implements Runnable {
 	public static final int SUL = 3;
 	public static int orientacaoAtual = NORTE;
 	public static boolean mudouDeSala = false;
-	private static boolean virouEsq = false;
-	private static boolean virouDir = false;
+	public static boolean virouEsq = false;
+	public static boolean virouDir = false;
 	public Navegacao2() {
 		resetarTacometro();
 	}
@@ -75,6 +75,10 @@ public class Navegacao2 implements Runnable {
 			virarDuasRodasDir(angCurva, velocidadeMenor);
 		} else if (orientacaoAtual == LESTE) {
 			virarDuasRodasEsq(angCurva, velocidadeMenor);
+		} else if(orientacaoAtual == NORTE){
+			virarDuasRodasDir(angCurva, velocidadeMenor);
+		} else if(orientacaoAtual == SUL){
+			virarDuasRodasEsq(angCurva, velocidadeMenor);
 		}
 	}
 	
@@ -98,6 +102,18 @@ public class Navegacao2 implements Runnable {
 				}
 			} else if (orientacaoAtual == SUL) {
 				if (virouEsq) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			} else if(orientacaoAtual == OESTE){
+				if (virouEsq) {
+					virarDuasRodasDir(angCurva, velocidadeMenor);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeMenor);
+				}
+			} else if(orientacaoAtual == LESTE){
+				if (virouDir) {
 					virarDuasRodasDir(angCurva, velocidadeMenor);
 				} else {
 					virarDuasRodasEsq(angCurva, velocidadeMenor);
@@ -138,6 +154,14 @@ public class Navegacao2 implements Runnable {
 		virouDir = false;
 		resetarTacometro();
 		proximaDirecao();
+	}
+	
+	public static void irProxSala(){
+		setVelocidade(2*velocidadeMenor);
+		while(!mudouDeSala)
+		andarFrente();
+		parar();
+		resetarTacometro();
 	}
 
 	public static void virarDuasRodasDir(int ang, int vel) {
