@@ -10,7 +10,7 @@ public class Captura {
 	public static void abrirGarra(){
 		setVelMaxGarra();
 		if(!garraAberta){
-			motorGarra.rotate(1800);
+			motorGarra.rotate(-100);
 			garraAberta = true;
 		} 
 	}
@@ -18,7 +18,7 @@ public class Captura {
 	public static void fecharGarra(){
 		setVelMaxGarra();
 		if(garraAberta){
-			motorGarra.rotate(-1800);
+			motorGarra.rotate(100);
 			garraAberta = false;
 		}
 	}
@@ -28,7 +28,7 @@ public class Captura {
 	}
 	
 	private static void setVelMaxGarra(){
-		motorGarra.setSpeed(motorGarra.getMaxSpeed());
+		motorGarra.setSpeed(200);
 	}
 
 }
