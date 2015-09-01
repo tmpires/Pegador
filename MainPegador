@@ -12,13 +12,15 @@ public class MainPegador {
 			System.out.println("Aperte ENTER para inciar");
 		}
 		Mapeamento.inicializarMapa();
-		while (!Navegacao.mudouDeSala && !Button.ESCAPE.isDown()) {
-			Navegacao.andarFrente();
-		}
-		Delay.msDelay(1300);
+		Navegacao.irProxSala();
+		//entrar sala central
+		Mapeamento.atualizarSala();
+		Navegacao.andarGraus(0.08);
 		Navegacao.parar();
-		Navegacao.virarDuasRodasDir(85, 100);
+		Navegacao.virarDuasRodasDir(90, 100);
+		Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 		// entra na pista e vira a direita
+		Mapeamento.setMapearZigZag(true);
 		while (!Button.ESCAPE.isDown()) {
 			Mapeamento.checarCelulas();
 			Mapeamento.irProximaCelula();
