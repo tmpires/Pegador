@@ -3,7 +3,7 @@ import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.hardware.sensor.EV3TouchSensor;
+import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
@@ -12,55 +12,118 @@ public class Navegacao implements Runnable {
 			MotorPort.B);
 	private static EV3LargeRegulatedMotor motorDir = new EV3LargeRegulatedMotor(
 			MotorPort.C);
-	private static EV3TouchSensor sensorToque = new EV3TouchSensor(
-			SensorPort.S3);
+	public static EV3GyroSensor gyro = new EV3GyroSensor(SensorPort.S3);
 	private static EV3ColorSensor sensorCorChao = new EV3ColorSensor(
 			SensorPort.S4);
-	private static boolean tocado = false;
-	private static final double RAIO_RODA = 0.026; // metros
-	private static final double DISTANCIA_RODAS = 0.135; // metros
+	// private static boolean tocado = false;
+	private static final double RAIO_RODA = 0.028; // metros
+	// private static final double DISTANCIA_RODAS = 0.137; // metros
 	private static int velocidadeMenor = 100;
-	private static int angCurva = 80;
+	private static int velocidadeMaior = 350;
+	private static int angCurva = 90;
 	public static final int LESTE = 0;
 	public static final int NORTE = 1;
 	public static final int OESTE = 2;
 	public static final int SUL = 3;
 	public static int orientacaoAtual = NORTE;
+	private static double anguloAtual;
 	public static boolean mudouDeSala = false;
-	private static boolean virouEsq = false;
-	private static boolean virouDir = false;
+	public static boolean virouEsq = false;
+	public static boolean virouDir = false;
+	private static double angAnterior;
+
 	public Navegacao() {
 		resetarTacometro();
 	}
-	
-	public static void andarFrente() {
+
+	/**
+	 * anda para frente
+	 */
+	public static void andarFrente(double ang) {
+		amostragem();
+		if (anguloAtual > ang + 5 || anguloAtual < ang - 5) {
+			setVelocidade(velocidadeMenor);
+			parar();
+			while (anguloAtual > ang + 5) {
+				motorEsq.forward();
+				motorDir.backward();
+				amostragem();
+			}
+			while (anguloAtual < ang - 5) {
+				motorEsq.backward();
+				motorDir.forward();
+				amostragem();
+			}
+			resetarTacometro();
+		}
+		setVelocidade(velocidadeMaior);
 		motorEsq.forward();
 		motorDir.forward();
 	}
 
+	/**
+	 * seta um valor para o angAnterior
+	 * 
+	 * @param ang
+	 */
+	public static void setAngAnterior(double ang) {
+		angAnterior = ang;
+	}
+
+	/**
+	 * retorna o angAnterior
+	 * 
+	 * @return angAnterior
+	 */
+
+	public static double getAngAnterior() {
+		return angAnterior;
+	}
+
+	/**
+	 * seta a leitura dos tacometros como zero
+	 */
 	public static void resetarTacometro() {
 		motorEsq.resetTachoCount();
 		motorDir.resetTachoCount();
 	}
 
+	public static double getAnguloAtual() {
+		return anguloAtual;
+	}
+
+	/**
+	 * gira em cada roda o angulo necessario para chegar na distancia
+	 * requisitada
+	 * 
+	 * @param distancia
+	 */
 	public static void andarGraus(double distancia) {
-		// gira em cada roda o angulo necessario para chegar na distancia
 		int angulo = (int) (180 * (distancia) / (Math.PI * RAIO_RODA));
 		motorEsq.rotate(angulo, true);
 		motorDir.rotate(angulo);
 	}
 
+	/**
+	 * Para os dois motores
+	 */
 	public static void parar() {
 		motorEsq.stop(true);
 		motorDir.stop();
 	}
 
+	/**
+	 * anda para trás
+	 */
 	public static void ré() {
-		setVelocidade(100);
+		setVelocidade(velocidadeMenor);
 		motorEsq.backward();
 		motorDir.backward();
 	}
 
+	/**
+	 * alinhar o robô na parede
+	 */
 	public static void alinhar() {
 		setVelocidade(300);
 		motorEsq.backward();
@@ -70,21 +133,29 @@ public class Navegacao implements Runnable {
 		resetarTacometro();
 	}
 
+	/**
+	 * Vira quando encontrar a parede
+	 */
+
+	// arrumar
 	public static void virarParede() {
-		parar();
-		ré();
-		Delay.msDelay(800);
 		if (orientacaoAtual == OESTE) {
 			virarDuasRodasDir(angCurva, velocidadeMenor);
 		} else if (orientacaoAtual == LESTE) {
 			virarDuasRodasEsq(angCurva, velocidadeMenor);
-		}
+		} /*
+		 * else if (orientacaoAtual == NORTE) { virarDuasRodasEsq(angCurva,
+		 * velocidadeMenor); } else if (orientacaoAtual == SUL) {
+		 * virarDuasRodasEsq(angCurva, velocidadeMenor); }
+		 */
+		angAnterior = anguloAtual;
 	}
-	
-	public static void virarParedeMesmaColuna(){
-		parar();
-		ré();
-		Delay.msDelay(800);
+
+	/**
+	 * Vira na mesma coluna, aliando o robô na parede
+	 */
+
+	public static void virarParedeMesmaColuna() {
 		if (!virouDir) {
 			virarDuasRodasDir(angCurva, velocidadeMenor);
 			virarDuasRodasDir(angCurva, velocidadeMenor);
@@ -93,105 +164,150 @@ public class Navegacao implements Runnable {
 			virarDuasRodasEsq(angCurva, velocidadeMenor);
 		}
 	}
-	
+
+	/**
+	 * Vira de forma que o robô navegue em zig zag
+	 */
+	// arrumar
 	public static void virarZigZag() {
-		Navegacao.parar();
-			if (orientacaoAtual == NORTE) {
-				if (virouDir) {
-					virarDuasRodasDir(angCurva, velocidadeMenor);
-				} else {
-					virarDuasRodasEsq(angCurva, velocidadeMenor);
-				}
-			} else if (orientacaoAtual == SUL) {
-				if (virouEsq) {
-					virarDuasRodasDir(angCurva, velocidadeMenor);
-				} else {
-					virarDuasRodasEsq(angCurva, velocidadeMenor);
-				}
+		parar();
+		if (orientacaoAtual == NORTE) {
+			if (virouDir) {
+				virarDuasRodasDir(angCurva, velocidadeMenor);
+			} else {
+				virarDuasRodasEsq(angCurva, velocidadeMenor);
 			}
+		} else if (orientacaoAtual == SUL) {
+			if (virouEsq) {
+				virarDuasRodasDir(angCurva, velocidadeMenor);
+			} else {
+				virarDuasRodasEsq(angCurva, velocidadeMenor);
+			}
+		}/*
+		 * else if (orientacaoAtual == OESTE) { if (virouDir) {
+		 * virarDuasRodasDir(angCurva, velocidadeMenor); } else {
+		 * virarDuasRodasEsq(angCurva, velocidadeMenor); } } else if
+		 * (orientacaoAtual == LESTE) { if (virouDir) {
+		 * virarDuasRodasDir(angCurva, velocidadeMenor); } else {
+		 * virarDuasRodasEsq(angCurva, velocidadeMenor); } }
+		 */
+		angAnterior = anguloAtual;
 	}
 
-	public static void virarEsq(int ang, int vel) {
-		// gira o angulo necessario em uma roda e deixa a outra parada
-		setVelocidade(vel);
-		motorEsq.stop(true);
-		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
-		virouEsq = true;
-		virouDir = false;
-		resetarTacometro();
-		proximaDirecao();
-	}
-
-	public static void virarDir(int ang, int vel) {
-		// gira o angulo necessario em uma roda e deixa a outra parada
-		setVelocidade(vel);
-		motorDir.stop(true);
-		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / RAIO_RODA)));
-		virouDir = true;
-		virouEsq = false;
-		resetarTacometro();
-		proximaDirecao();
-	}
-
+	/**
+	 * gira o angulo necessario com uma roda pra frente e outra pra tras em
+	 * torno do eixo do robo
+	 * 
+	 * @param ang
+	 * @param vel
+	 */
 	public static void virarDuasRodasEsq(int ang, int vel) {
-		// gira o angulo necessario com uma roda pra frente e outra pra tras em
-		// torno do eixo do robo
 		setVelocidade(vel);
-		motorEsq.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
-				true);
-		motorDir.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		double anguloAnterior = anguloAtual;
+		while (true) {
+			amostragem();
+			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
+				motorEsq.backward();
+				motorDir.forward();
+			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 2)) {
+				motorEsq.forward();
+				motorDir.backward();
+			} else {
+				parar();
+				break;
+			}
+		}
 		virouEsq = true;
 		virouDir = false;
 		resetarTacometro();
 		proximaDirecao();
+		angAnterior = anguloAtual;
 	}
 
+	/**
+	 * gira o angulo necessario com uma roda pra frente e outra pra tras em
+	 * torno do eixo do robo
+	 * 
+	 * @param ang
+	 * @param vel
+	 */
 	public static void virarDuasRodasDir(int ang, int vel) {
-		// gira o angulo necessario com uma roda pra frente e outra pra tras em
-		// torno do eixo do robo
 		setVelocidade(vel);
-		motorDir.rotate((int) (-ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))),
-				true);
-		motorEsq.rotate((int) (ang * (DISTANCIA_RODAS / (2 * RAIO_RODA))));
+		double anguloAnterior = anguloAtual;
+		while (true) {
+			amostragem();
+			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
+				motorEsq.forward();
+				motorDir.backward();
+			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 2)) {
+				motorEsq.backward();
+				motorDir.forward();
+			} else {
+				parar();
+				break;
+			}
+		}
 		virouDir = true;
 		virouEsq = false;
 		resetarTacometro();
 		proximaDirecao();
+		angAnterior = anguloAtual;
 	}
 
+	/**
+	 * anda para frente até que mude de sala
+	 */
+	public static void irProxSala() {
+		setVelocidade(2 * velocidadeMenor);
+		double anguloAnterior = anguloAtual;
+		while (!mudouDeSala)
+			andarFrente(anguloAnterior);
+		resetarTacometro();
+	}
+
+	/**
+	 * seta velocidade nos dois motores
+	 * 
+	 * @param vel
+	 */
 	public static void setVelocidade(int vel) {
 		motorEsq.setSpeed(vel);
 		motorDir.setSpeed(vel);
 	}
 
-	public static void setAceleracao(int acel) {
-		motorDir.setAcceleration(acel);
-		motorEsq.setAcceleration(acel);
-	}
-
+	/**
+	 * retorna a distancia percorrida pelo robô de acordo com o tacometro
+	 * 
+	 * @return distancia percorrida
+	 */
 	public static double getDistPercorrida() {
 		double angEsq = motorEsq.getTachoCount();
 		double dist = RAIO_RODA * angEsq * (Math.PI / 180);
 		return dist;
 	}
 
+	/**
+	 * Leitura dos sensores
+	 */
 	private static void amostragem() {
-		SampleProvider toque = sensorToque.getTouchMode();
 		SampleProvider corChao = sensorCorChao.getColorIDMode();
-		float amostraToque[] = new float[toque.sampleSize()];
 		float amostraCorChao[] = new float[corChao.sampleSize()];
-		toque.fetchSample(amostraToque, 0);
 		corChao.fetchSample(amostraCorChao, 0);
-		if (amostraToque[0] == 1)
-			tocado = true;
-		else
-			tocado = false;
+
+		SampleProvider Gyro = gyro.getAngleMode();
+		float amostraGyro[] = new float[Gyro.sampleSize()];
+		Gyro.fetchSample(amostraGyro, 0);
+		anguloAtual = amostraGyro[0];
 
 		if (amostraCorChao[0] == 6) // Branco
 			mudouDeSala = false;
 		else if (amostraCorChao[0] == 7) // Preto
 			mudouDeSala = true;
 	}
+
+	/**
+	 * Atualiza a direção de acordo com o sentido que o robo virou
+	 */
 
 	public static void proximaDirecao() {
 		switch (orientacaoAtual) {
@@ -224,15 +340,10 @@ public class Navegacao implements Runnable {
 		}
 	}
 
-	public static boolean getToque() {
-		return tocado;
-	}
-
 	@Override
 	public void run() {
 		while (!Button.ESCAPE.isDown()) {
 			amostragem();
 		}
 	}
-
 }
