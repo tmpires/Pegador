@@ -70,19 +70,31 @@ public class Mapeamento {
 				retornar(porta);
 			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
-			Mapa[linha][coluna].setOccupied(true);
-			Navegacao.parar();
-			Captura.abrirGarra();
-			Navegacao.ré();
-			Delay.msDelay(1500);
+			Mapa[linha-1][coluna].setOccupied(true);
 			desviando = true;
-			System.exit(0);
+			moverBonecoBranco();
 			// contornarCelula(Mapa[linha][coluna].getPosicao());
 			desviando = false;
-			Navegacao.setVelocidade(velocidadeMaior);
+			//Navegacao.setVelocidade(velocidadeMaior);
 		}
 	}
-
+	public static void moverBonecoBranco(){
+		
+		switch(Navegacao.orientacaoAtual){
+		case Navegacao.OESTE:
+			Navegacao.virarDuasRodasEsq(90, 100);
+			Navegacao.andarGraus(0.05);
+			Captura.abrirGarra();
+			Navegacao.andarGrausRe(0.05);
+			Navegacao.virarDuasRodasDir(90, 100);
+		case Navegacao.LESTE:
+			Navegacao.virarDuasRodasDir(90, 100);
+			Navegacao.andarGraus(0.05);
+			Captura.abrirGarra();
+			Navegacao.andarGrausRe(0.05);
+			Navegacao.virarDuasRodasEsq(90, 100);
+		}
+	}
 	/**
 	 * seta o mapeamento da sala como zigzag
 	 * 
