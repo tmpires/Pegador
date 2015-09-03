@@ -31,6 +31,10 @@ public class Navegacao implements Runnable {
 	public static boolean virouEsq = false;
 	public static boolean virouDir = false;
 	private static double angAnterior;
+	public static double angNorte;
+	public static double angSul;
+	public static double angLeste;
+	public static double angOeste;
 
 	public Navegacao() {
 		resetarTacometro();
@@ -40,7 +44,7 @@ public class Navegacao implements Runnable {
 	 * anda para frente
 	 */
 	public static void andarFrente(double ang) {
-		amostragem(); // pra que chamar esse metodo se ele ja esta rodando na thread?
+		amostragem();
 		if (anguloAtual > ang + 5 || anguloAtual < ang - 5) {
 			setVelocidade(velocidadeMenor);
 			parar();
@@ -103,11 +107,7 @@ public class Navegacao implements Runnable {
 		motorEsq.rotate(angulo, true);
 		motorDir.rotate(angulo);
 	}
-	public static void andarGrausRe(double distancia){
-		int angulo = (int) (180 * (distancia) / (Math.PI * RAIO_RODA));
-		motorEsq.rotate(-angulo, true);
-		motorDir.rotate(-angulo);
-	}
+
 	/**
 	 * Para os dois motores
 	 */
@@ -209,8 +209,7 @@ public class Navegacao implements Runnable {
 		setVelocidade(vel);
 		double anguloAnterior = anguloAtual;
 		while (true) {
-			amostragem(); // se tem uma thread atualizando esses valores, pra que atualizar novamente?
-			
+			amostragem();
 			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
 				motorEsq.backward();
 				motorDir.forward();
