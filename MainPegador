@@ -15,8 +15,8 @@ public class MainPegador {
 		Mapeamento.inicializarParedes();
 		Navegacao.irProxSala();
 		Mapeamento.atualizarSala();
-		Navegacao.andarGraus(0.05);
 		Mapeamento.checarCelulas();
+		Delay.msDelay(500);
 		Mapeamento.procurarParede();
 		Button.LEDPattern(3);
 	}
