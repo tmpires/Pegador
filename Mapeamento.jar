@@ -1,5 +1,3 @@
-package testeParede;
-
 import java.util.List;
 
 import lejos.hardware.Button;
@@ -54,6 +52,10 @@ public class Mapeamento {
 	private static double minimoDiagonal = 0.5;
 	private static double minimoReta = 0.4;
 	private static Celula[] paredeAleatoria = new Celula[7];
+
+	public static Celula getParedeAleatoria(int x) {
+		return paredeAleatoria[x];
+	}
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -390,6 +392,24 @@ public class Mapeamento {
 			}
 		}
 		Button.LEDPattern(0);
+		if(!paredeAleatoria[0].isOccupied() ||!paredeAleatoria[1].isOccupied()){
+			Mapeamento.mudarOrientacao(Navegacao.OESTE);
+			Mapeamento.atualizarCelulas();
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+			Mapeamento.mudarOrientacao(Navegacao.SUL);
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+			Mapeamento.mudarOrientacao(Navegacao.LESTE);
+			Mapeamento.setMapearZigZag(true);
+			while(coluna<4){
+			Mapeamento.checarCelulas();
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+			}
+		}
 	}
 
 	/**
