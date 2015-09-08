@@ -1,5 +1,6 @@
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
+import lejos.utility.Delay;
 
 public class MainPegador {
 	Navegacao navegacao = new Navegacao();
@@ -11,22 +12,13 @@ public class MainPegador {
 			System.out.println("Aperte ENTER para inciar");
 		}
 		Mapeamento.inicializarMapa();
+		Mapeamento.inicializarParedes();
 		Navegacao.irProxSala();
-		//entrar sala central
 		Mapeamento.atualizarSala();
-		Navegacao.andarGraus(0.08);
-		Navegacao.parar();
-		Navegacao.virarDuasRodasDir(90, 100);
-		Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
-		// entra na pista e vira a direita
-		Mapeamento.setMapearZigZag(true);
-		while (!Button.ESCAPE.isDown()) {
-			Mapeamento.checarCelulas();
-			Mapeamento.irProximaCelula();
-			Mapeamento.atualizarCelulas();
-		}
-		Captura.abrirGarra();
-		System.exit(0);
+		Navegacao.andarGraus(0.05);
+		Mapeamento.checarCelulas();
+		Mapeamento.procurarParede();
+		Button.LEDPattern(3);
 	}
 
 	private static void init() {
