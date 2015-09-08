@@ -402,12 +402,19 @@ public class Mapeamento {
 			Mapeamento.mudarOrientacao(Navegacao.SUL);
 			Mapeamento.irProximaCelula();
 			Mapeamento.atualizarCelulas();
+			Navegacao.parar();
+			
+			Navegacao.ré();
+			Delay.msDelay(300);
 			Mapeamento.mudarOrientacao(Navegacao.LESTE);
 			Mapeamento.setMapearZigZag(true);
+			
 			while(coluna<4){
-			Mapeamento.checarCelulas();
-			Mapeamento.irProximaCelula();
-			Mapeamento.atualizarCelulas();
+
+				Mapeamento.checarCelulas();
+				Mapeamento.irProximaCelula();
+				Mapeamento.atualizarCelulas();
+				
 			}
 		}
 	}
