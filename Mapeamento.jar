@@ -1,3 +1,5 @@
+package testeParede;
+
 import java.util.List;
 
 import lejos.hardware.Button;
@@ -39,7 +41,7 @@ public class Mapeamento {
 	private static boolean retornandoMapeamento = false;
 	private static int velocidadeMaior = 350;
 	private static int velocidadeMenor = 100;
-	private static int angCurva = 90;
+	private static int angCurva = 87;
 	private static boolean desviando;
 	private static boolean mapearZigZag = false;
 	public static final int MODULOINICIAL = 0;
@@ -52,10 +54,7 @@ public class Mapeamento {
 	private static double minimoDiagonal = 0.5;
 	private static double minimoReta = 0.4;
 	private static Celula[] paredeAleatoria = new Celula[7];
-
-	public static Celula getParedeAleatoria(int x) {
-		return paredeAleatoria[x];
-	}
+	private static boolean paredeEncontrada = false;
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -280,7 +279,7 @@ public class Mapeamento {
 		if (((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
 				|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.OESTE)
 				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))
-				&& coluna != 4 && linha != 4) {
+				&& linha != 4) {
 			Navegacao.alinhar();
 			Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 		}
@@ -325,8 +324,11 @@ public class Mapeamento {
 	 */
 
 	public static void inicializarParedes() {
-		paredeAleatoria[0] = Mapa[3][1];
-		paredeAleatoria[1] = Mapa[5][1];
+		paredeAleatoria[0] = Mapa[2][1];
+		paredeAleatoria[1] = Mapa[6][1];
+		paredeAleatoria[2] = Mapa[6][3];
+		paredeAleatoria[3] = Mapa[2][3];
+		paredeAleatoria[4] = Mapa[7][6];
 	}
 
 	/**
@@ -342,57 +344,24 @@ public class Mapeamento {
 			atualizarCelulas();
 		}
 		mudarOrientacao(Navegacao.OESTE);
-		while (linha >= paredeAleatoria[0].getPosicao().x) {
+		while (linha > paredeAleatoria[0].getPosicao().x) {
 			checarCelulas();
 			irProximaCelula();
 			atualizarCelulas();
 		}
 		Navegacao.parar();
-		if (Reconhecimento.getDistancia() < minimoDiagonal) {
-			Navegacao.virarDuasRodasDir(40, velocidadeMenor);
-			if (Reconhecimento.getDistancia() < minimoDiagonal) {
-				Navegacao.virarDuasRodasDir(40, velocidadeMenor);
-				if (Reconhecimento.getDistancia() < minimoDiagonal) {
-					Button.LEDPattern(4);
-					paredeAleatoria[0].setOccupied(true);
-					setarParede(Mapa[linha][coluna].getPosicao());
-				} else {
-					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
-					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
-				}
-			} else {
-				Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
-			}
-		}
-
-		if (!paredeAleatoria[0].isOccupied()) {
+		movimentoProcuraParede(); //Procura a parede diagonal esquerda baixo
+		if (!paredeEncontrada) {
 			mudarOrientacao(Navegacao.LESTE);
-			while (linha <= paredeAleatoria[1].getPosicao().x) {
+			while (linha < paredeAleatoria[1].getPosicao().x) {
 				checarCelulas();
 				irProximaCelula();
 				atualizarCelulas();
 			}
 			Navegacao.parar();
-			if (Reconhecimento.getDistancia() < minimoDiagonal) {
-				Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
-				if (Reconhecimento.getDistancia() < minimoDiagonal) {
-					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
-					if (Reconhecimento.getDistancia() < minimoDiagonal) {
-						Button.LEDPattern(4);
-						Delay.msDelay(1000);
-						paredeAleatoria[1].setOccupied(true);
-						setarParede(Mapa[linha][coluna].getPosicao());
-					} else {
-						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
-						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
-					}
-				} else {
-					Navegacao.virarDuasRodasDir(40, velocidadeMenor);
-				}
-			}
+		movimentoProcuraParede(); //Procura a parede diagonal direita baixo
 		}
-		Button.LEDPattern(0);
-		if(!paredeAleatoria[0].isOccupied() ||!paredeAleatoria[1].isOccupied()){
+		if(!paredeEncontrada){
 			Mapeamento.mudarOrientacao(Navegacao.OESTE);
 			Mapeamento.atualizarCelulas();
 			Mapeamento.irProximaCelula();
@@ -403,18 +372,118 @@ public class Mapeamento {
 			Mapeamento.irProximaCelula();
 			Mapeamento.atualizarCelulas();
 			Navegacao.parar();
-			
 			Navegacao.ré();
-			Delay.msDelay(300);
+			Delay.msDelay(1000);
 			Mapeamento.mudarOrientacao(Navegacao.LESTE);
 			Mapeamento.setMapearZigZag(true);
 			
-			while(coluna<4){
-
+			while(Mapa[linha][coluna].getPosicao() != Mapa[8][3].getPosicao()){
 				Mapeamento.checarCelulas();
 				Mapeamento.irProximaCelula();
 				Mapeamento.atualizarCelulas();
-				
+			}
+			mudarOrientacao(Navegacao.OESTE);
+			Navegacao.alinhar();
+			while (linha > paredeAleatoria[2].getPosicao().x) {
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			movimentoProcuraParede(); //Procura a parede Reta direita meio
+			if(!paredeEncontrada){
+				mudarOrientacao(Navegacao.OESTE);
+				while (linha > paredeAleatoria[3].getPosicao().x) {
+					checarCelulas();
+					irProximaCelula();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.NORTE);
+				movimentoProcuraParede(); //Procura a parede Reta esquerda meio
+				 if(!paredeEncontrada){
+					 mudarOrientacao(Navegacao.OESTE);
+					 while(Mapa[linha][coluna].getPosicao() != Mapa[8][4].getPosicao()){
+						 checarCelulas();
+						 irProximaCelula();
+						 atualizarCelulas();	 
+					 }
+					mudarOrientacao(Navegacao.NORTE);
+					while(coluna < paredeAleatoria[4].getPosicao().y){
+						checarCelulas();
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					mudarOrientacao(Navegacao.OESTE);
+					while (linha > paredeAleatoria[4].getPosicao().x) {
+						checarCelulas();
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					Navegacao.parar();
+					movimentoProcuraParede(); //Procura a parede diagonal direita cima
+				 }
+			}
+		} 
+	}
+	
+	private static void movimentoProcuraParede(){
+		if(Navegacao.orientacaoAtual == Navegacao.OESTE){
+			if (Reconhecimento.getDistancia() < minimoDiagonal) {
+				Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+				if (Reconhecimento.getDistancia() < minimoDiagonal) {
+					Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+					if (Reconhecimento.getDistancia() < minimoDiagonal) {
+						Button.LEDPattern(4);
+						Delay.msDelay(1000);
+						paredeAleatoria[0].setOccupied(true);
+						paredeEncontrada = true;
+						setarParede(Mapa[linha][coluna].getPosicao());
+					} else {
+						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+					}
+				} else {
+					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+				}
+			}
+		} else if(Navegacao.orientacaoAtual == Navegacao.LESTE){
+			if (Reconhecimento.getDistancia() < minimoDiagonal) {
+				Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+				if (Reconhecimento.getDistancia() < minimoDiagonal) {
+					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+					if (Reconhecimento.getDistancia() < minimoDiagonal) {
+						Button.LEDPattern(4);
+						Delay.msDelay(1000);
+						paredeAleatoria[1].setOccupied(true);
+						paredeEncontrada = true;
+						setarParede(Mapa[linha][coluna].getPosicao());
+					} else {
+						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+					}
+				} else {
+					Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+				}
+			}
+		} else if(Navegacao.orientacaoAtual == Navegacao.NORTE){
+			if (Reconhecimento.getDistancia() < minimoReta) {
+				Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
+				if (Reconhecimento.getDistancia() < minimoReta) {
+					Navegacao.virarDuasRodasDir(30, velocidadeMenor);
+					Navegacao.virarDuasRodasDir(30, velocidadeMenor);
+					if (Reconhecimento.getDistancia() < minimoReta) {
+						Button.LEDPattern(4);
+						Delay.msDelay(1000);
+						Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
+						paredeAleatoria[1].setOccupied(true);
+						paredeEncontrada = true;
+						setarParede(Mapa[linha][coluna].getPosicao());
+					} else {
+						Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
+					}
+				} else {
+					Navegacao.virarDuasRodasDir(30, velocidadeMenor);
+				}
 			}
 		}
 	}
@@ -506,7 +575,7 @@ public class Mapeamento {
 	 */
 
 	private static int verificarConteudo() throws Exception {
-		if (Reconhecimento.getDistancia() <= 0.15 && Captura.getGarraAberta()
+		if (Reconhecimento.getDistancia() <= 0.1 && Captura.getGarraAberta()
 				&& !estaNaParede) {
 			// se houver algo alem da parede a 15 cm
 			Navegacao.setVelocidade(velocidadeMenor);
@@ -597,7 +666,6 @@ public class Mapeamento {
 				Navegacao.alinhar();
 				Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 			}
-
 			irProximaCelula();
 			atualizarCelulas();
 		}
@@ -779,6 +847,9 @@ public class Mapeamento {
 		case Navegacao.OESTE:
 			Navegacao.virarDuasRodasEsq(angCurva, velocidadeMenor);
 			break;
+		case Navegacao.NORTE:
+			Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+			Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
 		default:
 			break;
 		}
