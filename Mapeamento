@@ -30,7 +30,7 @@ public class Mapeamento {
 	public static int bonecoNaoPreto = 2;
 	public static boolean virouEsq = false;
 	public static boolean primeiraCurva = true;
-	public static double tamanhoDaCelula = 0.18;
+	public static double tamanhoDaCelula = 0.19;
 	private static boolean estaNaParede = false;
 	private static boolean estaNaPorta = false;
 	private static boolean celulaEsq = false;
@@ -42,7 +42,6 @@ public class Mapeamento {
 	private static int velocidadeMaior = 350;
 	private static int velocidadeMenor = 100;
 	private static int angCurva = 87;
-	private static boolean desviando;
 	private static boolean mapearZigZag = false;
 	public static final int MODULOINICIAL = 0;
 	public static final int SALACENTRAL = 1;
@@ -55,6 +54,7 @@ public class Mapeamento {
 	private static double minimoReta = 0.4;
 	private static Celula[] paredeAleatoria = new Celula[7];
 	private static boolean paredeEncontrada = false;
+	private static boolean virarParedeAleatoria;
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -75,12 +75,8 @@ public class Mapeamento {
 				retornar(porta);
 			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
-			// Mapa[linha][coluna].setOccupied(true);
 			Navegacao.parar();
-			desviando = true;
 			moverBonecoBranco();
-			// contornarCelula(Mapa[linha][coluna].getPosicao());
-			desviando = false;
 			Navegacao.setVelocidade(velocidadeMaior);
 		}
 	}
@@ -229,36 +225,30 @@ public class Mapeamento {
 			if (linha < numLinhas)
 				linha++;
 			System.out.println("LESTE");
-			if (!resgatando && !retornandoMapeamento && !desviando
-					&& mapearZigZag
-					&& (perifericaDireita || perifericaEsquerda))
+			if ((!resgatando && !retornandoMapeamento && mapearZigZag && (perifericaDireita || perifericaEsquerda)))
 				Navegacao.virarZigZag();
 			break;
 		case Navegacao.OESTE:
 			System.out.println("OESTE");
 			if (linha > 0)
 				linha--;
-			if (!resgatando && !retornandoMapeamento && !desviando
-					&& mapearZigZag
-					&& (perifericaDireita || perifericaEsquerda))
+			if ((!resgatando && !retornandoMapeamento && mapearZigZag && (perifericaDireita || perifericaEsquerda)))
 				Navegacao.virarZigZag();
 			break;
 		case Navegacao.NORTE:
 			if (coluna < numColunas)
 				coluna++;
 			System.out.println("NORTE");
-			if (!resgatando && !retornandoMapeamento && !desviando
-					&& mapearZigZag && !perifericaDireita
-					&& !perifericaEsquerda)
+			if ((!resgatando && !retornandoMapeamento && mapearZigZag
+					&& !perifericaDireita && !perifericaEsquerda))
 				Navegacao.virarZigZag();
 			break;
 		case Navegacao.SUL:
 			if (coluna >= 0)
 				coluna--;
 			System.out.println("SUL");
-			if (!resgatando && !retornandoMapeamento && !desviando
-					&& mapearZigZag && !perifericaDireita
-					&& !perifericaEsquerda)
+			if ((!resgatando && !retornandoMapeamento && mapearZigZag
+					&& !perifericaDireita && !perifericaEsquerda))
 				Navegacao.virarZigZag();
 			break;
 		default:
@@ -266,10 +256,23 @@ public class Mapeamento {
 		}
 		System.out.println("[" + linha + ", " + coluna + "]");
 
-		if ((linha == 0 && Navegacao.orientacaoAtual == Navegacao.OESTE)
+		if ((paredeAleatoria[0].temParede() && linha == 4
+				&& Navegacao.orientacaoAtual == Navegacao.OESTE && coluna <= 3)
+				|| (paredeAleatoria[1].temParede() && linha == 4
+						&& Navegacao.orientacaoAtual == Navegacao.LESTE && coluna <= 3)) {
+			if (coluna == 3) {
+				mapearProximoParede();
+			} else {
+				virarParedeAleatoria = true;
+			}
+		} else {
+			virarParedeAleatoria = false;
+		}
+
+		if (((linha == 0 && Navegacao.orientacaoAtual == Navegacao.OESTE)
 				|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.LESTE)
-				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.NORTE)
-				|| (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.SUL)) {
+				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.NORTE) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.SUL))
+				|| virarParedeAleatoria) {
 			estaNaParede = true;
 			Sound.beep();
 		} else {
@@ -292,23 +295,18 @@ public class Mapeamento {
 		else
 			estaNaPorta = false;
 
-		if (estaNaParede && linha != linhaInicial && mapearZigZag) {
+		if (estaNaParede && (Mapa[linha][coluna].getPosicao() != inicio)
+				&& mapearZigZag) {
 			Navegacao.parar();
 			Navegacao.ré();
 			Delay.msDelay(800);
 			if (!resgatando) {
-				if (desviando) {
-					Navegacao.virarParedeMesmaColuna();
+				Navegacao.virarParede();
+				if (primeiraCurva) {
 					Navegacao.alinhar();
 					Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
-				} else {
-					Navegacao.virarParede();
+					primeiraCurva = false;
 				}
-			}
-			if (primeiraCurva) {
-				Navegacao.alinhar();
-				Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
-				primeiraCurva = false;
 			}
 		}
 
@@ -328,7 +326,9 @@ public class Mapeamento {
 		paredeAleatoria[1] = Mapa[6][1];
 		paredeAleatoria[2] = Mapa[6][3];
 		paredeAleatoria[3] = Mapa[2][3];
-		paredeAleatoria[4] = Mapa[7][6];
+		paredeAleatoria[4] = Mapa[1][6];
+		paredeAleatoria[5] = Mapa[3][6];
+		paredeAleatoria[6] = Mapa[7][6];
 	}
 
 	/**
@@ -337,12 +337,14 @@ public class Mapeamento {
 	 * @throws Exception
 	 */
 	public static void procurarParede() throws Exception {
-
 		while (coluna < paredeAleatoria[0].getPosicao().y) {
 			checarCelulas();
 			irProximaCelula();
+			checarCelulas();
 			atualizarCelulas();
+			checarCelulas();
 		}
+		checarCelulas();
 		mudarOrientacao(Navegacao.OESTE);
 		while (linha > paredeAleatoria[0].getPosicao().x) {
 			checarCelulas();
@@ -350,7 +352,7 @@ public class Mapeamento {
 			atualizarCelulas();
 		}
 		Navegacao.parar();
-		movimentoProcuraParede(); //Procura a parede diagonal esquerda baixo
+		movimentoProcuraParede(); // Procura a parede diagonal esquerda baixo
 		if (!paredeEncontrada) {
 			mudarOrientacao(Navegacao.LESTE);
 			while (linha < paredeAleatoria[1].getPosicao().x) {
@@ -359,9 +361,14 @@ public class Mapeamento {
 				atualizarCelulas();
 			}
 			Navegacao.parar();
-		movimentoProcuraParede(); //Procura a parede diagonal direita baixo
+			movimentoProcuraParede(); // Procura a parede diagonal direita baixo
+		} else {
+			mapearProximoParede();
+			retornar(inicio);
+			mudarOrientacao(Navegacao.LESTE);
+			setMapearZigZag(true);
 		}
-		if(!paredeEncontrada){
+		if (!paredeEncontrada) {
 			Mapeamento.mudarOrientacao(Navegacao.OESTE);
 			Mapeamento.atualizarCelulas();
 			Mapeamento.irProximaCelula();
@@ -376,22 +383,21 @@ public class Mapeamento {
 			Delay.msDelay(1000);
 			Mapeamento.mudarOrientacao(Navegacao.LESTE);
 			Mapeamento.setMapearZigZag(true);
-			
-			while(Mapa[linha][coluna].getPosicao() != Mapa[8][3].getPosicao()){
+
+			while (Mapa[linha][coluna].getPosicao() != Mapa[8][3].getPosicao()) {
 				Mapeamento.checarCelulas();
 				Mapeamento.irProximaCelula();
 				Mapeamento.atualizarCelulas();
 			}
 			mudarOrientacao(Navegacao.OESTE);
-			Navegacao.alinhar();
 			while (linha > paredeAleatoria[2].getPosicao().x) {
 				checarCelulas();
 				irProximaCelula();
 				atualizarCelulas();
 			}
 			mudarOrientacao(Navegacao.NORTE);
-			movimentoProcuraParede(); //Procura a parede Reta direita meio
-			if(!paredeEncontrada){
+			movimentoProcuraParede(); // Procura a parede Reta direita meio
+			if (!paredeEncontrada) {
 				mudarOrientacao(Navegacao.OESTE);
 				while (linha > paredeAleatoria[3].getPosicao().x) {
 					checarCelulas();
@@ -399,45 +405,75 @@ public class Mapeamento {
 					atualizarCelulas();
 				}
 				mudarOrientacao(Navegacao.NORTE);
-				movimentoProcuraParede(); //Procura a parede Reta esquerda meio
-				 if(!paredeEncontrada){
-					 mudarOrientacao(Navegacao.OESTE);
-					 while(Mapa[linha][coluna].getPosicao() != Mapa[8][4].getPosicao()){
-						 checarCelulas();
-						 irProximaCelula();
-						 atualizarCelulas();	 
-					 }
-					mudarOrientacao(Navegacao.NORTE);
-					while(coluna < paredeAleatoria[4].getPosicao().y){
-						checarCelulas();
-						irProximaCelula();
-						atualizarCelulas();
-					}
+				movimentoProcuraParede(); // Procura a parede Reta esquerda meio
+				if (!paredeEncontrada) {
 					mudarOrientacao(Navegacao.OESTE);
-					while (linha > paredeAleatoria[4].getPosicao().x) {
+					while (Mapa[linha][coluna].getPosicao() != Mapa[0][3]
+							.getPosicao()) {
+						Mapeamento.checarCelulas();
+						Mapeamento.irProximaCelula();
+						Mapeamento.atualizarCelulas();
+					}
+					setMapearZigZag(false);
+					mudarOrientacao(Navegacao.NORTE);
+					while (coluna < paredeAleatoria[4].getPosicao().y) {
 						checarCelulas();
 						irProximaCelula();
 						atualizarCelulas();
 					}
-					Navegacao.parar();
-					movimentoProcuraParede(); //Procura a parede diagonal direita cima
-				 }
+					mudarOrientacao(Navegacao.LESTE);
+					Navegacao.alinhar();
+					while (linha < paredeAleatoria[4].getPosicao().x) {
+						checarCelulas();
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					movimentoProcuraParede(); // Procura a parede diagonal
+												// esquerda cima
+					if (!paredeEncontrada) {
+						mudarOrientacao(Navegacao.LESTE);
+						while (linha < paredeAleatoria[5].getPosicao().x) {
+							checarCelulas();
+							irProximaCelula();
+							atualizarCelulas();
+						}
+						movimentoProcuraParede(); // Procura a parede reta cima
+						if (!paredeEncontrada)
+							setarParede(paredeAleatoria[6].getPosicao());
+					} else {
+						retornar(Mapa[0][4].getPosicao());
+						setMapearZigZag(true);
+					}
+				} else {
+					mudarOrientacao(Navegacao.OESTE);
+					setMapearZigZag(true);
+				}
+			} else {
+				mapearProximoParede();
 			}
-		} 
+		} else {
+			mapearProximoParede();
+			retornar(inicio);
+			mudarOrientacao(Navegacao.OESTE);
+			setMapearZigZag(true);
+		}
 	}
-	
-	private static void movimentoProcuraParede(){
-		if(Navegacao.orientacaoAtual == Navegacao.OESTE){
+
+	/**
+	 * Faz o movimento para procurar a parede
+	 */
+	private static void movimentoProcuraParede() {
+		if (Navegacao.orientacaoAtual == Navegacao.OESTE) {
 			if (Reconhecimento.getDistancia() < minimoDiagonal) {
 				Navegacao.virarDuasRodasDir(40, velocidadeMenor);
 				if (Reconhecimento.getDistancia() < minimoDiagonal) {
 					Navegacao.virarDuasRodasDir(40, velocidadeMenor);
 					if (Reconhecimento.getDistancia() < minimoDiagonal) {
 						Button.LEDPattern(4);
-						Delay.msDelay(1000);
-						paredeAleatoria[0].setOccupied(true);
 						paredeEncontrada = true;
 						setarParede(Mapa[linha][coluna].getPosicao());
+						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
+						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
 					} else {
 						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
 						Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
@@ -446,17 +482,19 @@ public class Mapeamento {
 					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
 				}
 			}
-		} else if(Navegacao.orientacaoAtual == Navegacao.LESTE){
+		} else if (Navegacao.orientacaoAtual == Navegacao.LESTE
+				&& Mapa[linha][coluna].getPosicao() != paredeAleatoria[5]
+						.getPosicao()) {
 			if (Reconhecimento.getDistancia() < minimoDiagonal) {
 				Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
 				if (Reconhecimento.getDistancia() < minimoDiagonal) {
 					Navegacao.virarDuasRodasEsq(40, velocidadeMenor);
 					if (Reconhecimento.getDistancia() < minimoDiagonal) {
 						Button.LEDPattern(4);
-						Delay.msDelay(1000);
-						paredeAleatoria[1].setOccupied(true);
 						paredeEncontrada = true;
 						setarParede(Mapa[linha][coluna].getPosicao());
+						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
+						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
 					} else {
 						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
 						Navegacao.virarDuasRodasDir(40, velocidadeMenor);
@@ -465,7 +503,9 @@ public class Mapeamento {
 					Navegacao.virarDuasRodasDir(40, velocidadeMenor);
 				}
 			}
-		} else if(Navegacao.orientacaoAtual == Navegacao.NORTE){
+		} else if (Navegacao.orientacaoAtual == Navegacao.NORTE
+				|| Mapa[linha][coluna].getPosicao() == paredeAleatoria[5]
+						.getPosicao()) {
 			if (Reconhecimento.getDistancia() < minimoReta) {
 				Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
 				if (Reconhecimento.getDistancia() < minimoReta) {
@@ -473,11 +513,9 @@ public class Mapeamento {
 					Navegacao.virarDuasRodasDir(30, velocidadeMenor);
 					if (Reconhecimento.getDistancia() < minimoReta) {
 						Button.LEDPattern(4);
-						Delay.msDelay(1000);
-						Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
-						paredeAleatoria[1].setOccupied(true);
 						paredeEncontrada = true;
 						setarParede(Mapa[linha][coluna].getPosicao());
+						Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
 					} else {
 						Navegacao.virarDuasRodasEsq(30, velocidadeMenor);
 					}
@@ -489,23 +527,340 @@ public class Mapeamento {
 	}
 
 	/**
+	 * Mapear celulas ao redor da parede aleatoria
+	 * 
+	 * @throws Exception
+	 */
+
+	private static void mapearProximoParede() throws Exception {
+		if (paredeAleatoria[0].temParede()) {
+			if (coluna == 3) {
+				setMapearZigZag(false);
+				mudarOrientacao(Navegacao.NORTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.NORTE);
+				while (coluna < 4) {
+					checarCelulas();
+					irProximaCelula();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.LESTE);
+				setMapearZigZag(true);
+			} else {
+				mudarOrientacao(Navegacao.SUL);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				Navegacao.parar();
+				Navegacao.setVelocidade(velocidadeMenor);
+				Navegacao.andarGraus(-tamanhoDaCelula);
+				Navegacao.setVelocidade(velocidadeMaior);
+				Navegacao.resetarTacometro();
+				linha++;
+				Navegacao.parar();
+				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				Navegacao.alinhar();
+				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				Navegacao.parar();
+				Navegacao.setVelocidade(velocidadeMenor);
+				Navegacao.andarGraus(-tamanhoDaCelula);
+				Navegacao.setVelocidade(velocidadeMaior);
+				Navegacao.resetarTacometro();
+				linha++;
+				Navegacao.parar();
+				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				Navegacao.alinhar();
+				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+
+			}
+		} else if (paredeAleatoria[1].temParede()) {
+			if (coluna == 3) {
+				setMapearZigZag(false);
+				mudarOrientacao(Navegacao.NORTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.LESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.LESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.LESTE);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.NORTE);
+				while (coluna < 4) {
+					checarCelulas();
+					irProximaCelula();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.OESTE);
+				setMapearZigZag(true);
+			} else {
+				mudarOrientacao(Navegacao.SUL);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.LESTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				Navegacao.parar();
+				Navegacao.setVelocidade(velocidadeMenor);
+				Navegacao.andarGraus(-tamanhoDaCelula);
+				Navegacao.setVelocidade(velocidadeMaior);
+				Navegacao.resetarTacometro();
+				linha--;
+				Navegacao.parar();
+				Navegacao.virarDuasRodasEsq(angCurva, velocidadeMenor);
+				Navegacao.alinhar();
+				Navegacao.virarDuasRodasEsq(angCurva, velocidadeMenor);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+		} else if (paredeAleatoria[2].temParede()) {
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			while(linha < 3){
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
+			setMapearZigZag(true);
+		} else if(paredeAleatoria[3].temParede()){
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.LESTE);
+			while(linha < 5){
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			while(linha < 8){
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			Navegacao.alinhar();
+			setMapearZigZag(true);
+		}
+	}
+
+	/**
 	 * seta como ocupado as celulas que contem a parede
 	 * 
 	 * @param posicao
 	 */
 
 	private static void setarParede(Posicao posicao) {
-		if (posicao.x == 5 && posicao.y == 1) {
-			Mapa[6][1].setChecked(true);
-			Mapa[6][1].setOccupied(true);
+		if (posicao.x == paredeAleatoria[0].getPosicao().x
+				&& posicao.y == paredeAleatoria[0].getPosicao().y) {
+			paredeAleatoria[0].setParede(true);
+			Mapa[0][0].setChecked(true);
+			Mapa[0][0].setOccupied(true);
+			Mapa[0][0].setParede(true);
+			Mapa[1][1].setChecked(true);
+			Mapa[1][1].setOccupied(true);
+			Mapa[1][1].setParede(true);
+			Mapa[2][2].setChecked(true);
+			Mapa[2][2].setOccupied(true);
+			Mapa[2][2].setParede(true);
+			Mapa[3][3].setChecked(true);
+			Mapa[3][3].setOccupied(true);
+			Mapa[3][3].setParede(true);
+		} else if (posicao.x == paredeAleatoria[1].getPosicao().x
+				&& posicao.y == paredeAleatoria[1].getPosicao().y) {
+			paredeAleatoria[1].setParede(true);
 			Mapa[8][0].setChecked(true);
 			Mapa[8][0].setOccupied(true);
+			Mapa[8][0].setParede(true);
 			Mapa[7][1].setChecked(true);
 			Mapa[7][1].setOccupied(true);
+			Mapa[7][1].setParede(true);
 			Mapa[6][2].setChecked(true);
 			Mapa[6][2].setOccupied(true);
+			Mapa[6][2].setParede(true);
 			Mapa[5][3].setChecked(true);
 			Mapa[5][3].setOccupied(true);
+			Mapa[5][3].setParede(true);
+		} else if (posicao.x == paredeAleatoria[2].getPosicao().x
+				&& posicao.y == paredeAleatoria[2].getPosicao().y) {
+			paredeAleatoria[2].setParede(true);
+			Mapa[8][4].setChecked(true);
+			Mapa[8][4].setOccupied(true);
+			Mapa[8][4].setParede(true);
+			Mapa[7][4].setChecked(true);
+			Mapa[7][4].setOccupied(true);
+			Mapa[7][4].setParede(true);
+			Mapa[6][4].setChecked(true);
+			Mapa[6][4].setOccupied(true);
+			Mapa[6][4].setParede(true);
+			Mapa[5][4].setChecked(true);
+			Mapa[5][4].setOccupied(true);
+			Mapa[5][4].setParede(true);
+			Mapa[4][4].setChecked(true);
+			Mapa[4][4].setOccupied(true);
+			Mapa[4][4].setParede(true);
+		} else if (posicao.x == paredeAleatoria[3].getPosicao().x
+				&& posicao.y == paredeAleatoria[3].getPosicao().y) {
+			paredeAleatoria[3].setParede(true);
+			Mapa[0][4].setChecked(true);
+			Mapa[0][4].setOccupied(true);
+			Mapa[0][4].setParede(true);
+			Mapa[1][4].setChecked(true);
+			Mapa[1][4].setOccupied(true);
+			Mapa[1][4].setParede(true);
+			Mapa[2][4].setChecked(true);
+			Mapa[2][4].setOccupied(true);
+			Mapa[2][4].setParede(true);
+			Mapa[3][4].setChecked(true);
+			Mapa[3][4].setOccupied(true);
+			Mapa[3][4].setParede(true);
+			Mapa[4][4].setChecked(true);
+			Mapa[4][4].setOccupied(true);
+			Mapa[4][4].setParede(true);
+		} else if (posicao.x == paredeAleatoria[4].getPosicao().x
+				&& posicao.y == paredeAleatoria[4].getPosicao().y) {
+			paredeAleatoria[4].setParede(true);
+			Mapa[0][8].setChecked(true);
+			Mapa[0][8].setOccupied(true);
+			Mapa[0][8].setParede(true);
+			Mapa[1][7].setChecked(true);
+			Mapa[1][7].setOccupied(true);
+			Mapa[1][7].setParede(true);
+			Mapa[2][6].setChecked(true);
+			Mapa[2][6].setOccupied(true);
+			Mapa[2][6].setParede(true);
+			Mapa[3][5].setChecked(true);
+			Mapa[3][5].setParede(true);
+			Mapa[3][5].setOccupied(true);
+		} else if (posicao.x == paredeAleatoria[5].getPosicao().x
+				&& posicao.y == paredeAleatoria[5].getPosicao().y) {
+			paredeAleatoria[5].setParede(true);
+			Mapa[4][8].setChecked(true);
+			Mapa[4][8].setOccupied(true);
+			Mapa[4][8].setParede(true);
+			Mapa[4][7].setChecked(true);
+			Mapa[4][7].setOccupied(true);
+			Mapa[4][7].setParede(true);
+			Mapa[4][6].setChecked(true);
+			Mapa[4][6].setOccupied(true);
+			Mapa[4][6].setParede(true);
+			Mapa[4][5].setChecked(true);
+			Mapa[4][5].setParede(true);
+			Mapa[4][5].setOccupied(true);
+			Mapa[4][4].setChecked(true);
+			Mapa[4][4].setParede(true);
+			Mapa[4][4].setOccupied(true);
+		} else if (posicao.x == paredeAleatoria[6].getPosicao().x
+				&& posicao.y == paredeAleatoria[6].getPosicao().y) {
+			paredeAleatoria[6].setParede(true);
+			Mapa[8][8].setChecked(true);
+			Mapa[8][8].setOccupied(true);
+			Mapa[8][8].setParede(true);
+			Mapa[7][7].setChecked(true);
+			Mapa[7][7].setOccupied(true);
+			Mapa[7][7].setParede(true);
+			Mapa[6][6].setChecked(true);
+			Mapa[6][6].setOccupied(true);
+			Mapa[6][6].setParede(true);
+			Mapa[5][5].setChecked(true);
+			Mapa[5][5].setParede(true);
+			Mapa[5][5].setOccupied(true);
 		}
 	}
 
@@ -855,13 +1210,13 @@ public class Mapeamento {
 		}
 		if (salaAtual == SALACENTRAL) {
 			Navegacao.irProxSala();
-			Delay.msDelay(500);
+			Delay.msDelay(1000);
 			atualizarSala();
 			Navegacao.parar();
 			Captura.abrirGarra();
 			while (!Navegacao.mudouDeSala)
 				Navegacao.ré();
-			Delay.msDelay(5000);
+			Delay.msDelay(500);
 			resgatando = false;
 			atualizarSala();
 			Navegacao.resetarTacometro();
@@ -960,4 +1315,5 @@ public class Mapeamento {
 			break;
 		}
 	}
+
 }
