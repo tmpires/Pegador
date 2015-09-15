@@ -1,8 +1,9 @@
+package testeParede;
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.utility.Delay;
 
-public class MainPegador {
+public class buscaParede {
 	Navegacao navegacao = new Navegacao();
 
 	public static void main(String[] args) throws Exception {
@@ -15,9 +16,13 @@ public class MainPegador {
 		Mapeamento.inicializarParedes();
 		Navegacao.irProxSala();
 		Mapeamento.atualizarSala();
-		Mapeamento.checarCelulas();
-		Delay.msDelay(500);
+		Delay.msDelay(2000);
 		Mapeamento.procurarParede();
+		while(!Button.ESCAPE.isDown()){
+			Mapeamento.checarCelulas();
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+		}
 		Button.LEDPattern(3);
 	}
 
