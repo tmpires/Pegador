@@ -41,7 +41,7 @@ public class Mapeamento {
 	private static boolean retornandoMapeamento = false;
 	private static int velocidadeMaior = 350;
 	private static int velocidadeMenor = 100;
-	private static int angCurva = 87;
+	private static int angCurva = Navegacao.getAnguloCurva();
 	private static boolean mapearZigZag = false;
 	public static final int MODULOINICIAL = 0;
 	public static final int SALACENTRAL = 1;
@@ -259,8 +259,10 @@ public class Mapeamento {
 		if ((paredeAleatoria[0].temParede() && linha == 4
 				&& Navegacao.orientacaoAtual == Navegacao.OESTE && coluna <= 3)
 				|| (paredeAleatoria[1].temParede() && linha == 4
-						&& Navegacao.orientacaoAtual == Navegacao.LESTE && coluna <= 3)) {
-			if (coluna == 3) {
+						&& Navegacao.orientacaoAtual == Navegacao.LESTE && coluna <= 3)
+				|| (paredeAleatoria[5].temParede() && linha == 5 && Navegacao.orientacaoAtual == Navegacao.OESTE)) {
+			if (coluna == 3
+					|| (paredeAleatoria[4].temParede() && coluna == 7 && linha == 4)) {
 				mapearProximoParede();
 			} else {
 				virarParedeAleatoria = true;
@@ -284,7 +286,6 @@ public class Mapeamento {
 				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))
 				&& linha != 4) {
 			Navegacao.alinhar();
-			Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 		}
 
 		if ((linha == 0 && coluna == 4 && Navegacao.orientacaoAtual == Navegacao.OESTE)
@@ -304,7 +305,6 @@ public class Mapeamento {
 				Navegacao.virarParede();
 				if (primeiraCurva) {
 					Navegacao.alinhar();
-					Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 					primeiraCurva = false;
 				}
 			}
@@ -337,21 +337,22 @@ public class Mapeamento {
 	 * @throws Exception
 	 */
 	public static void procurarParede() throws Exception {
-		while (coluna < paredeAleatoria[0].getPosicao().y) {
-			checarCelulas();
-			irProximaCelula();
-			checarCelulas();
-			atualizarCelulas();
-			checarCelulas();
-		}
-		checarCelulas();
 		mudarOrientacao(Navegacao.OESTE);
 		while (linha > paredeAleatoria[0].getPosicao().x) {
 			checarCelulas();
 			irProximaCelula();
 			atualizarCelulas();
 		}
+		checarCelulas();
+		mudarOrientacao(Navegacao.NORTE);
+		Navegacao.alinhar();
+		while (coluna < paredeAleatoria[0].getPosicao().y) {
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+		}
 		Navegacao.parar();
+		mudarOrientacao(Navegacao.OESTE);
 		movimentoProcuraParede(); // Procura a parede diagonal esquerda baixo
 		if (!paredeEncontrada) {
 			mudarOrientacao(Navegacao.LESTE);
@@ -438,15 +439,16 @@ public class Mapeamento {
 							atualizarCelulas();
 						}
 						movimentoProcuraParede(); // Procura a parede reta cima
-						if (!paredeEncontrada)
+						if (!paredeEncontrada) {
 							setarParede(paredeAleatoria[6].getPosicao());
+							mapearProximoParede();
+						} else
+							mapearProximoParede();
 					} else {
-						retornar(Mapa[0][4].getPosicao());
-						setMapearZigZag(true);
+						mapearProximoParede();
 					}
 				} else {
-					mudarOrientacao(Navegacao.OESTE);
-					setMapearZigZag(true);
+					mapearProximoParede();
 				}
 			} else {
 				mapearProximoParede();
@@ -572,6 +574,7 @@ public class Mapeamento {
 				mudarOrientacao(Navegacao.LESTE);
 				setMapearZigZag(true);
 			} else {
+				setMapearZigZag(false);
 				mudarOrientacao(Navegacao.SUL);
 				irProximaCelula();
 				checarCelulas();
@@ -590,31 +593,12 @@ public class Mapeamento {
 				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
 				Navegacao.alinhar();
 				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				mudarOrientacao(Navegacao.LESTE);
 				irProximaCelula();
 				checarCelulas();
 				atualizarCelulas();
-				mudarOrientacao(Navegacao.SUL);
-				irProximaCelula();
-				checarCelulas();
-				atualizarCelulas();
-				mudarOrientacao(Navegacao.OESTE);
-				irProximaCelula();
-				checarCelulas();
-				atualizarCelulas();
-				Navegacao.parar();
-				Navegacao.setVelocidade(velocidadeMenor);
-				Navegacao.andarGraus(-tamanhoDaCelula);
-				Navegacao.setVelocidade(velocidadeMaior);
-				Navegacao.resetarTacometro();
-				linha++;
-				Navegacao.parar();
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
-				Navegacao.alinhar();
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
-				irProximaCelula();
-				checarCelulas();
-				atualizarCelulas();
-
+				Sound.beepSequence();
+				setMapearZigZag(true);
 			}
 		} else if (paredeAleatoria[1].temParede()) {
 			if (coluna == 3) {
@@ -689,7 +673,7 @@ public class Mapeamento {
 			irProximaCelula();
 			atualizarCelulas();
 			mudarOrientacao(Navegacao.LESTE);
-			while(linha < 3){
+			while (linha < 3) {
 				checarCelulas();
 				irProximaCelula();
 				atualizarCelulas();
@@ -707,7 +691,8 @@ public class Mapeamento {
 			mudarOrientacao(Navegacao.LESTE);
 			Navegacao.alinhar();
 			setMapearZigZag(true);
-		} else if(paredeAleatoria[3].temParede()){
+		} else if (paredeAleatoria[3].temParede()) {
+			setMapearZigZag(false);
 			mudarOrientacao(Navegacao.OESTE);
 			while (linha > 0) {
 				checarCelulas();
@@ -715,17 +700,19 @@ public class Mapeamento {
 				atualizarCelulas();
 			}
 			mudarOrientacao(Navegacao.LESTE);
-			while(linha < 5){
+			Navegacao.alinhar();
+			while (linha < 5) {
 				checarCelulas();
 				irProximaCelula();
 				atualizarCelulas();
 			}
+			Navegacao.parar();
 			mudarOrientacao(Navegacao.NORTE);
 			checarCelulas();
 			irProximaCelula();
 			atualizarCelulas();
 			mudarOrientacao(Navegacao.LESTE);
-			while(linha < 8){
+			while (linha < 8) {
 				checarCelulas();
 				irProximaCelula();
 				atualizarCelulas();
@@ -737,6 +724,259 @@ public class Mapeamento {
 			mudarOrientacao(Navegacao.OESTE);
 			Navegacao.alinhar();
 			setMapearZigZag(true);
+		} else if (paredeAleatoria[4].temParede()) {
+			if (coluna == 7 && linha == 4) {
+				setMapearZigZag(false);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.NORTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				Navegacao.alinhar();
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				Navegacao.setVelocidade(velocidadeMenor);
+				Navegacao.andarGraus(-tamanhoDaCelula);
+				Navegacao.setVelocidade(velocidadeMaior);
+				coluna++;
+				Navegacao.virarDuasRodasDir(angCurva, velocidadeMenor);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				Navegacao.setVelocidade(velocidadeMenor);
+				Navegacao.andarGraus(-tamanhoDaCelula);
+				Navegacao.setVelocidade(velocidadeMaior);
+				linha++;
+				Navegacao.virarDuasRodasEsq(angCurva, velocidadeMenor);
+				Navegacao.alinhar();
+				Navegacao.virarDuasRodasEsq(angCurva, velocidadeMenor);
+				setMapearZigZag(true);
+			} else {
+				setMapearZigZag(false);
+				mudarOrientacao(Navegacao.SUL);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.LESTE);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				while (linha > 0) {
+					irProximaCelula();
+					checarCelulas();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.LESTE);
+				setMapearZigZag(true);
+			}
+		} else if (paredeAleatoria[5].temParede()) {
+			setMapearZigZag(false);
+			mudarOrientacao(Navegacao.NORTE);
+			while (coluna < 8) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.ré();
+			Delay.msDelay(500);
+			mudarOrientacao(Navegacao.SUL);
+			Navegacao.alinhar();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
+			while (linha < 3) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.ré();
+			Delay.msDelay(500);
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
+			while (linha < 3) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.NORTE);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			setMapearZigZag(true);
+		} else if (paredeAleatoria[6].temParede()) {
+			setMapearZigZag(false);
+			mudarOrientacao(Navegacao.NORTE);
+			while (coluna < 8) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.ré();
+			Delay.msDelay(500);
+			mudarOrientacao(Navegacao.SUL);
+			Navegacao.alinhar();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
+			while (linha < 3) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			while (linha > 0) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.ré();
+			Delay.msDelay(500);
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
+			while (linha < 4) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			while (coluna < 8) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.ré();
+			Delay.msDelay(500);
+			mudarOrientacao(Navegacao.LESTE);
+			while (linha < 7) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.setVelocidade(velocidadeMenor);
+			Navegacao.andarGraus(-tamanhoDaCelula);
+			Navegacao.setVelocidade(velocidadeMaior);
+			linha--;
+			mudarOrientacao(Navegacao.SUL);
+			Navegacao.alinhar();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.OESTE);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.LESTE);
+			while (linha < 8) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			mudarOrientacao(Navegacao.NORTE);
+			while (coluna < 7) {
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
+			}
+			Navegacao.setVelocidade(velocidadeMenor);
+			Navegacao.andarGraus(-tamanhoDaCelula);
+			Navegacao.setVelocidade(velocidadeMaior);
+			coluna--;
+			mudarOrientacao(Navegacao.OESTE);
+			Navegacao.alinhar();
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
+			mudarOrientacao(Navegacao.SUL);
+			irProximaCelula();
+			checarCelulas();
+			atualizarCelulas();
 		}
 	}
 
@@ -1019,7 +1259,6 @@ public class Mapeamento {
 					|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))
 					&& coluna != 4 && linha != 4) {
 				Navegacao.alinhar();
-				Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 			}
 			irProximaCelula();
 			atualizarCelulas();
@@ -1216,7 +1455,7 @@ public class Mapeamento {
 			Captura.abrirGarra();
 			while (!Navegacao.mudouDeSala)
 				Navegacao.ré();
-			Delay.msDelay(500);
+			Delay.msDelay(2000);
 			resgatando = false;
 			atualizarSala();
 			Navegacao.resetarTacometro();
