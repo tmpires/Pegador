@@ -343,7 +343,6 @@ public class Mapeamento {
 			irProximaCelula();
 			atualizarCelulas();
 		}
-		checarCelulas();
 		mudarOrientacao(Navegacao.NORTE);
 		Navegacao.alinhar();
 		while (coluna < paredeAleatoria[0].getPosicao().y) {
@@ -363,87 +362,87 @@ public class Mapeamento {
 			}
 			Navegacao.parar();
 			movimentoProcuraParede(); // Procura a parede diagonal direita baixo
-		} else {
-			mapearProximoParede();
-			retornar(inicio);
-			mudarOrientacao(Navegacao.LESTE);
-			setMapearZigZag(true);
-		}
-		if (!paredeEncontrada) {
-			Mapeamento.mudarOrientacao(Navegacao.OESTE);
-			Mapeamento.atualizarCelulas();
-			Mapeamento.irProximaCelula();
-			Mapeamento.atualizarCelulas();
-			Mapeamento.irProximaCelula();
-			Mapeamento.atualizarCelulas();
-			Mapeamento.mudarOrientacao(Navegacao.SUL);
-			Mapeamento.irProximaCelula();
-			Mapeamento.atualizarCelulas();
-			Navegacao.parar();
-			Navegacao.ré();
-			Delay.msDelay(1000);
-			Mapeamento.mudarOrientacao(Navegacao.LESTE);
-			Mapeamento.setMapearZigZag(true);
-
-			while (Mapa[linha][coluna].getPosicao() != Mapa[8][3].getPosicao()) {
-				Mapeamento.checarCelulas();
+			if (!paredeEncontrada) {
+				Mapeamento.mudarOrientacao(Navegacao.OESTE);
+				Mapeamento.atualizarCelulas();
 				Mapeamento.irProximaCelula();
 				Mapeamento.atualizarCelulas();
-			}
-			mudarOrientacao(Navegacao.OESTE);
-			while (linha > paredeAleatoria[2].getPosicao().x) {
-				checarCelulas();
-				irProximaCelula();
-				atualizarCelulas();
-			}
-			mudarOrientacao(Navegacao.NORTE);
-			movimentoProcuraParede(); // Procura a parede Reta direita meio
-			if (!paredeEncontrada) {
+				Mapeamento.irProximaCelula();
+				Mapeamento.atualizarCelulas();
+				Mapeamento.mudarOrientacao(Navegacao.SUL);
+				Mapeamento.irProximaCelula();
+				Mapeamento.atualizarCelulas();
+				Navegacao.parar();
+				Navegacao.ré();
+				Delay.msDelay(1000);
+				Mapeamento.mudarOrientacao(Navegacao.LESTE);
+				Mapeamento.setMapearZigZag(true);
+
+				while (Mapa[linha][coluna].getPosicao() != Mapa[8][3]
+						.getPosicao()) {
+					Mapeamento.checarCelulas();
+					Mapeamento.irProximaCelula();
+					Mapeamento.atualizarCelulas();
+				}
 				mudarOrientacao(Navegacao.OESTE);
-				while (linha > paredeAleatoria[3].getPosicao().x) {
+				while (linha > paredeAleatoria[2].getPosicao().x) {
 					checarCelulas();
 					irProximaCelula();
 					atualizarCelulas();
 				}
 				mudarOrientacao(Navegacao.NORTE);
-				movimentoProcuraParede(); // Procura a parede Reta esquerda meio
+				movimentoProcuraParede(); // Procura a parede Reta direita meio
 				if (!paredeEncontrada) {
 					mudarOrientacao(Navegacao.OESTE);
-					while (Mapa[linha][coluna].getPosicao() != Mapa[0][3]
-							.getPosicao()) {
-						Mapeamento.checarCelulas();
-						Mapeamento.irProximaCelula();
-						Mapeamento.atualizarCelulas();
+					while (linha > paredeAleatoria[3].getPosicao().x) {
+						checarCelulas();
+						irProximaCelula();
+						atualizarCelulas();
 					}
-					setMapearZigZag(false);
 					mudarOrientacao(Navegacao.NORTE);
-					while (coluna < paredeAleatoria[4].getPosicao().y) {
-						checarCelulas();
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					mudarOrientacao(Navegacao.LESTE);
-					Navegacao.alinhar();
-					while (linha < paredeAleatoria[4].getPosicao().x) {
-						checarCelulas();
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					movimentoProcuraParede(); // Procura a parede diagonal
-												// esquerda cima
+					movimentoProcuraParede(); // Procura a parede Reta esquerda
+												// meio
 					if (!paredeEncontrada) {
-						mudarOrientacao(Navegacao.LESTE);
-						while (linha < paredeAleatoria[5].getPosicao().x) {
+						mudarOrientacao(Navegacao.OESTE);
+						while (Mapa[linha][coluna].getPosicao() != Mapa[0][3]
+								.getPosicao()) {
+							Mapeamento.checarCelulas();
+							Mapeamento.irProximaCelula();
+							Mapeamento.atualizarCelulas();
+						}
+						setMapearZigZag(false);
+						mudarOrientacao(Navegacao.NORTE);
+						while (coluna < paredeAleatoria[4].getPosicao().y) {
 							checarCelulas();
 							irProximaCelula();
 							atualizarCelulas();
 						}
-						movimentoProcuraParede(); // Procura a parede reta cima
+						mudarOrientacao(Navegacao.LESTE);
+						Navegacao.alinhar();
+						while (linha < paredeAleatoria[4].getPosicao().x) {
+							checarCelulas();
+							irProximaCelula();
+							atualizarCelulas();
+						}
+						movimentoProcuraParede(); // Procura a parede diagonal
+													// esquerda cima
 						if (!paredeEncontrada) {
-							setarParede(paredeAleatoria[6].getPosicao());
+							mudarOrientacao(Navegacao.LESTE);
+							while (linha < paredeAleatoria[5].getPosicao().x) {
+								checarCelulas();
+								irProximaCelula();
+								atualizarCelulas();
+							}
+							movimentoProcuraParede(); // Procura a parede reta
+														// cima
+							if (!paredeEncontrada) {
+								setarParede(paredeAleatoria[6].getPosicao());
+								mapearProximoParede();
+							} else
+								mapearProximoParede();
+						} else {
 							mapearProximoParede();
-						} else
-							mapearProximoParede();
+						}
 					} else {
 						mapearProximoParede();
 					}
@@ -452,11 +451,13 @@ public class Mapeamento {
 				}
 			} else {
 				mapearProximoParede();
+				retornar(inicio);
+				mudarOrientacao(Navegacao.OESTE);
+				setMapearZigZag(true);
 			}
 		} else {
 			mapearProximoParede();
-			retornar(inicio);
-			mudarOrientacao(Navegacao.OESTE);
+			mudarOrientacao(Navegacao.LESTE);
 			setMapearZigZag(true);
 		}
 	}
@@ -597,8 +598,9 @@ public class Mapeamento {
 				irProximaCelula();
 				checarCelulas();
 				atualizarCelulas();
-				Sound.beepSequence();
-				setMapearZigZag(true);
+				irProximaCelula();
+				checarCelulas();
+				atualizarCelulas();
 			}
 		} else if (paredeAleatoria[1].temParede()) {
 			if (coluna == 3) {
@@ -1307,6 +1309,7 @@ public class Mapeamento {
 
 		if (resgatando) {
 			deixarBonecoDestino();
+			Captura.abrirGarra();
 			resgatando = false;
 			retornandoMapeamento = true;
 			retornar(ultMapeadaCentral);
@@ -1458,6 +1461,7 @@ public class Mapeamento {
 			Delay.msDelay(2000);
 			resgatando = false;
 			atualizarSala();
+			Captura.fecharGarra();
 			Navegacao.resetarTacometro();
 		}
 	}
