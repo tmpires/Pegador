@@ -1,9 +1,12 @@
+package testeParede;
+
 import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3GyroSensor;
+import lejos.hardware.sensor.NXTLightSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
@@ -19,8 +22,8 @@ public class Navegacao implements Runnable {
 	private static final double RAIO_RODA = 0.028; // metros
 	// private static final double DISTANCIA_RODAS = 0.137; // metros
 	private static int velocidadeMenor = 100;
-	private static int velocidadeMaior = 350;
-	private static int angCurva = 90;
+	private static int velocidadeMaior = 480;
+	private static int angCurva = 85;
 	public static final int LESTE = 0;
 	public static final int NORTE = 1;
 	public static final int OESTE = 2;
@@ -44,25 +47,40 @@ public class Navegacao implements Runnable {
 	 * anda para frente
 	 */
 	public static void andarFrente(double ang) {
-		amostragem();
 		if (anguloAtual > ang + 5 || anguloAtual < ang - 5) {
 			setVelocidade(velocidadeMenor);
 			parar();
 			while (anguloAtual > ang + 5) {
 				motorEsq.forward();
 				motorDir.backward();
-				amostragem();
 			}
 			while (anguloAtual < ang - 5) {
 				motorEsq.backward();
 				motorDir.forward();
-				amostragem();
 			}
 			resetarTacometro();
 		}
 		setVelocidade(velocidadeMaior);
 		motorEsq.forward();
 		motorDir.forward();
+	}
+
+	/**
+	 * @return velocidadeMenor
+	 */
+	public static int getVelocidadeMenor() {
+		return velocidadeMenor;
+	}
+
+	/**
+	 * @return velocidadeMaior
+	 */
+	public static int getVelocidadeMaior() {
+		return velocidadeMaior;
+	}
+
+	public static int getAnguloCurva() {
+		return angCurva;
 	}
 
 	/**
@@ -75,8 +93,6 @@ public class Navegacao implements Runnable {
 	}
 
 	/**
-	 * retorna o angAnterior
-	 * 
 	 * @return angAnterior
 	 */
 
@@ -135,6 +151,7 @@ public class Navegacao implements Runnable {
 		Delay.msDelay(1000);
 		parar();
 		resetarTacometro();
+		angAnterior = anguloAtual;
 	}
 
 	/**
@@ -153,20 +170,6 @@ public class Navegacao implements Runnable {
 		 * virarDuasRodasEsq(angCurva, velocidadeMenor); }
 		 */
 		angAnterior = anguloAtual;
-	}
-
-	/**
-	 * Vira na mesma coluna, aliando o robô na parede
-	 */
-
-	public static void virarParedeMesmaColuna() {
-		if (!virouDir) {
-			virarDuasRodasDir(angCurva, velocidadeMenor);
-			virarDuasRodasDir(angCurva, velocidadeMenor);
-		} else if (!virouEsq) {
-			virarDuasRodasEsq(angCurva, velocidadeMenor);
-			virarDuasRodasEsq(angCurva, velocidadeMenor);
-		}
 	}
 
 	/**
@@ -208,8 +211,8 @@ public class Navegacao implements Runnable {
 	public static void virarDuasRodasEsq(int ang, int vel) {
 		setVelocidade(vel);
 		double anguloAnterior = anguloAtual;
+		long tempoInicio = System.currentTimeMillis();
 		while (true) {
-			amostragem();
 			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
 				motorEsq.backward();
 				motorDir.forward();
@@ -219,6 +222,14 @@ public class Navegacao implements Runnable {
 			} else {
 				parar();
 				break;
+			}
+			if ((System.currentTimeMillis() - tempoInicio) > 5000) {
+				Navegacao.parar();
+				Navegacao.ré();
+				Delay.msDelay(1000);
+				Navegacao.parar();
+				Navegacao.resetarTacometro();
+				tempoInicio = System.currentTimeMillis();
 			}
 		}
 		virouEsq = true;
@@ -238,8 +249,8 @@ public class Navegacao implements Runnable {
 	public static void virarDuasRodasDir(int ang, int vel) {
 		setVelocidade(vel);
 		double anguloAnterior = anguloAtual;
+		long tempoInicio = System.currentTimeMillis();
 		while (true) {
-			amostragem();
 			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
 				motorEsq.forward();
 				motorDir.backward();
@@ -249,6 +260,14 @@ public class Navegacao implements Runnable {
 			} else {
 				parar();
 				break;
+			}
+			if ((System.currentTimeMillis() - tempoInicio) > 5000) {
+				Navegacao.parar();
+				Navegacao.ré();
+				Delay.msDelay(1000);
+				Navegacao.parar();
+				Navegacao.resetarTacometro();
+				tempoInicio = System.currentTimeMillis();
 			}
 		}
 		virouDir = true;
