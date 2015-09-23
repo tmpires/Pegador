@@ -39,8 +39,8 @@ public class Mapeamento {
 	private static boolean celulaCima = false;
 	private static boolean resgatando = false;
 	private static boolean retornandoMapeamento = false;
-	private static int velocidadeMaior = 350;
-	private static int velocidadeMenor = 100;
+	private static int velocidadeMaior = Navegacao.getVelocidadeMaior();
+	private static int velocidadeMenor = Navegacao.getVelocidadeMenor();
 	private static int angCurva = Navegacao.getAnguloCurva();
 	private static boolean mapearZigZag = false;
 	public static final int MODULOINICIAL = 0;
@@ -55,6 +55,7 @@ public class Mapeamento {
 	private static Celula[] paredeAleatoria = new Celula[7];
 	private static boolean paredeEncontrada = false;
 	private static boolean virarParedeAleatoria;
+	private static double angulo;
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -260,6 +261,7 @@ public class Mapeamento {
 				&& Navegacao.orientacaoAtual == Navegacao.OESTE && coluna <= 3)
 				|| (paredeAleatoria[1].temParede() && linha == 4
 						&& Navegacao.orientacaoAtual == Navegacao.LESTE && coluna <= 3)
+				|| (paredeAleatoria[4].temParede() && linha == 4 && Navegacao.orientacaoAtual == Navegacao.OESTE)
 				|| (paredeAleatoria[5].temParede() && linha == 5 && Navegacao.orientacaoAtual == Navegacao.OESTE)) {
 			if (coluna == 3
 					|| (paredeAleatoria[4].temParede() && coluna == 7 && linha == 4)) {
@@ -303,10 +305,10 @@ public class Mapeamento {
 			Delay.msDelay(800);
 			if (!resgatando) {
 				Navegacao.virarParede();
-				if (primeiraCurva) {
-					Navegacao.alinhar();
-					primeiraCurva = false;
-				}
+				/*
+				 * if (primeiraCurva) { Navegacao.alinhar(); primeiraCurva =
+				 * false; }
+				 */
 			}
 		}
 
@@ -341,42 +343,71 @@ public class Mapeamento {
 		while (linha > paredeAleatoria[0].getPosicao().x) {
 			checarCelulas();
 			irProximaCelula();
+			checarCelulas();
 			atualizarCelulas();
+			checarCelulas();
 		}
+		checarCelulas();
 		mudarOrientacao(Navegacao.NORTE);
 		Navegacao.alinhar();
 		while (coluna < paredeAleatoria[0].getPosicao().y) {
 			checarCelulas();
 			irProximaCelula();
+			checarCelulas();
 			atualizarCelulas();
+			checarCelulas();
 		}
-		Navegacao.parar();
+		checarCelulas();
 		mudarOrientacao(Navegacao.OESTE);
+		angulo = Navegacao.getAngAnterior();
 		movimentoProcuraParede(); // Procura a parede diagonal esquerda baixo
 		if (!paredeEncontrada) {
+			mudarOrientacao(Navegacao.OESTE);
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
+			checarCelulas();
+			irProximaCelula();
+			atualizarCelulas();
 			mudarOrientacao(Navegacao.LESTE);
+			Navegacao.alinhar();
 			while (linha < paredeAleatoria[1].getPosicao().x) {
 				checarCelulas();
 				irProximaCelula();
+				checarCelulas();
 				atualizarCelulas();
+				checarCelulas();
 			}
-			Navegacao.parar();
+			angulo = Navegacao.getAngAnterior();
 			movimentoProcuraParede(); // Procura a parede diagonal direita baixo
 			if (!paredeEncontrada) {
-				Mapeamento.mudarOrientacao(Navegacao.OESTE);
-				Mapeamento.atualizarCelulas();
-				Mapeamento.irProximaCelula();
-				Mapeamento.atualizarCelulas();
-				Mapeamento.irProximaCelula();
-				Mapeamento.atualizarCelulas();
-				Mapeamento.mudarOrientacao(Navegacao.SUL);
-				Mapeamento.irProximaCelula();
-				Mapeamento.atualizarCelulas();
-				Navegacao.parar();
-				Navegacao.ré();
-				Delay.msDelay(1000);
-				Mapeamento.mudarOrientacao(Navegacao.LESTE);
-				Mapeamento.setMapearZigZag(true);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.SUL);
+				checarCelulas();
+				irProximaCelula();
+				atualizarCelulas();
+				mudarOrientacao(Navegacao.OESTE);
+				Navegacao.alinhar();
+				while (linha > 0) {
+					checarCelulas();
+					irProximaCelula();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.NORTE);
+				Navegacao.alinhar();
+				while (coluna < 2) {
+					checarCelulas();
+					irProximaCelula();
+					atualizarCelulas();
+				}
+				mudarOrientacao(Navegacao.LESTE);
+				Navegacao.alinhar();
+				setMapearZigZag(true);
 
 				while (Mapa[linha][coluna].getPosicao() != Mapa[8][3]
 						.getPosicao()) {
@@ -390,20 +421,25 @@ public class Mapeamento {
 					irProximaCelula();
 					atualizarCelulas();
 				}
+
+				angulo = Navegacao.getAngAnterior();
 				mudarOrientacao(Navegacao.NORTE);
 				movimentoProcuraParede(); // Procura a parede Reta direita meio
 				if (!paredeEncontrada) {
 					mudarOrientacao(Navegacao.OESTE);
+					Navegacao.setAngAnterior(angulo);
 					while (linha > paredeAleatoria[3].getPosicao().x) {
 						checarCelulas();
 						irProximaCelula();
 						atualizarCelulas();
 					}
+					angulo = Navegacao.getAngAnterior();
 					mudarOrientacao(Navegacao.NORTE);
 					movimentoProcuraParede(); // Procura a parede Reta esquerda
 												// meio
 					if (!paredeEncontrada) {
 						mudarOrientacao(Navegacao.OESTE);
+						Navegacao.setAngAnterior(angulo);
 						while (Mapa[linha][coluna].getPosicao() != Mapa[0][3]
 								.getPosicao()) {
 							Mapeamento.checarCelulas();
@@ -424,6 +460,8 @@ public class Mapeamento {
 							irProximaCelula();
 							atualizarCelulas();
 						}
+						Navegacao.parar();
+						angulo = Navegacao.getAngAnterior();
 						movimentoProcuraParede(); // Procura a parede diagonal
 													// esquerda cima
 						if (!paredeEncontrada) {
@@ -433,6 +471,7 @@ public class Mapeamento {
 								irProximaCelula();
 								atualizarCelulas();
 							}
+							angulo = Navegacao.getAngAnterior();
 							movimentoProcuraParede(); // Procura a parede reta
 														// cima
 							if (!paredeEncontrada) {
@@ -536,6 +575,7 @@ public class Mapeamento {
 	 */
 
 	private static void mapearProximoParede() throws Exception {
+		Navegacao.setAngAnterior(angulo);
 		if (paredeAleatoria[0].temParede()) {
 			if (coluna == 3) {
 				setMapearZigZag(false);
@@ -782,6 +822,7 @@ public class Mapeamento {
 					atualizarCelulas();
 				}
 				mudarOrientacao(Navegacao.LESTE);
+				Navegacao.alinhar();
 				setMapearZigZag(true);
 			}
 		} else if (paredeAleatoria[5].temParede()) {
@@ -1309,7 +1350,6 @@ public class Mapeamento {
 
 		if (resgatando) {
 			deixarBonecoDestino();
-			Captura.abrirGarra();
 			resgatando = false;
 			retornandoMapeamento = true;
 			retornar(ultMapeadaCentral);
@@ -1324,6 +1364,7 @@ public class Mapeamento {
 			}
 			retornandoMapeamento = false;
 		}
+		Captura.abrirGarra();
 	}
 
 	/**
@@ -1558,5 +1599,4 @@ public class Mapeamento {
 			break;
 		}
 	}
-
 }
