@@ -1,0 +1,43 @@
+package salaParede;
+
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
+import salaParede.Mapeamento;
+import salaParede.Navegacao;
+import salaParede.Reconhecimento;
+
+public class MainParede {
+
+	// TODO Auto-generated method stub
+	Navegacao navegacao = new Navegacao();
+
+	public static void main(String[] args) throws Exception {
+		init();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+			System.out.println("Aperte ENTER para inciar");
+		}
+		Mapeamento.inicializarMapa();
+		Mapeamento.inicializarParedes();
+		Navegacao.irProxSala();
+		Mapeamento.atualizarSala();
+		Delay.msDelay(1000);
+		Mapeamento.procurarParede();
+		while (!Button.ESCAPE.isDown()) {
+			Mapeamento.checarCelulas();
+			Mapeamento.irProximaCelula();
+			Mapeamento.atualizarCelulas();
+		}
+	}
+
+	private static void init() {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Navegacao navegacao = new Navegacao();
+		Thread thNavegacao = new Thread(navegacao);
+		thNavegacao.start();
+	}
+
+}
