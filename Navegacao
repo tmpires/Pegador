@@ -1,12 +1,10 @@
-package testeParede;
-
+package salaCentral;
 import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3GyroSensor;
-import lejos.hardware.sensor.NXTLightSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
@@ -22,8 +20,9 @@ public class Navegacao implements Runnable {
 	private static final double RAIO_RODA = 0.028; // metros
 	// private static final double DISTANCIA_RODAS = 0.137; // metros
 	private static int velocidadeMenor = 100;
-	private static int velocidadeMaior = 480;
-	private static int angCurva = 85;
+	private static int velocidadeCurva = 80;
+	private static int velocidadeMaior = (int) (motorDir.getMaxSpeed() * 0.6);
+	private static int angCurva = 87;
 	public static final int LESTE = 0;
 	public static final int NORTE = 1;
 	public static final int OESTE = 2;
@@ -38,6 +37,7 @@ public class Navegacao implements Runnable {
 	public static double angSul;
 	public static double angLeste;
 	public static double angOeste;
+	private static boolean inverterNavegacao = false;
 
 	public Navegacao() {
 		resetarTacometro();
@@ -78,7 +78,18 @@ public class Navegacao implements Runnable {
 	public static int getVelocidadeMaior() {
 		return velocidadeMaior;
 	}
-
+	
+	/**
+	 * @return velocidadeMaior
+	 */
+	public static int getVelocidadeCurva() {
+		return velocidadeCurva;
+	}
+	
+	/**
+	 * 
+	 * @return angCurva
+	 */
 	public static int getAnguloCurva() {
 		return angCurva;
 	}
@@ -148,56 +159,83 @@ public class Navegacao implements Runnable {
 		setVelocidade(300);
 		motorEsq.backward();
 		motorDir.backward();
-		Delay.msDelay(1000);
+		Delay.msDelay(1500);
 		parar();
 		resetarTacometro();
 		angAnterior = anguloAtual;
+	}
+	
+	/**
+	 * retorna a flag inverter navegacao
+	 * @return
+	 */
+	public static boolean getInverterNavegacao() {
+		return inverterNavegacao;
+	}
+
+	/**
+	 * seta a flag inverter navegacao como true
+	 * 
+	 * @param inverter
+	 */
+
+	public static void setInverterNavegacao(boolean inverter) {
+		inverterNavegacao = inverter;
 	}
 
 	/**
 	 * Vira quando encontrar a parede
 	 */
 
-	// arrumar
 	public static void virarParede() {
 		if (orientacaoAtual == OESTE) {
-			virarDuasRodasDir(angCurva, velocidadeMenor);
+			if (!inverterNavegacao)
+				virarDuasRodasDir(angCurva, velocidadeCurva);
+			else
+				virarDuasRodasEsq(angCurva, velocidadeCurva);
 		} else if (orientacaoAtual == LESTE) {
-			virarDuasRodasEsq(angCurva, velocidadeMenor);
-		} /*
-		 * else if (orientacaoAtual == NORTE) { virarDuasRodasEsq(angCurva,
-		 * velocidadeMenor); } else if (orientacaoAtual == SUL) {
-		 * virarDuasRodasEsq(angCurva, velocidadeMenor); }
-		 */
+			if (!inverterNavegacao)
+				virarDuasRodasEsq(angCurva, velocidadeCurva);
+			else
+				virarDuasRodasDir(angCurva, velocidadeCurva);
+		}
 		angAnterior = anguloAtual;
 	}
 
 	/**
 	 * Vira de forma que o robô navegue em zig zag
 	 */
-	// arrumar
 	public static void virarZigZag() {
 		parar();
 		if (orientacaoAtual == NORTE) {
-			if (virouDir) {
-				virarDuasRodasDir(angCurva, velocidadeMenor);
+			if (!inverterNavegacao) {
+				if (virouDir) {
+					virarDuasRodasDir(angCurva, velocidadeCurva);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeCurva);
+				}
 			} else {
-				virarDuasRodasEsq(angCurva, velocidadeMenor);
+				if (virouDir) {
+					virarDuasRodasEsq(angCurva, velocidadeCurva);
+				} else {
+					virarDuasRodasDir(angCurva, velocidadeCurva);
+				}
 			}
 		} else if (orientacaoAtual == SUL) {
-			if (virouEsq) {
-				virarDuasRodasDir(angCurva, velocidadeMenor);
+			if (!inverterNavegacao) {
+				if (virouEsq) {
+					virarDuasRodasDir(angCurva, velocidadeCurva);
+				} else {
+					virarDuasRodasEsq(angCurva, velocidadeCurva);
+				}
 			} else {
-				virarDuasRodasEsq(angCurva, velocidadeMenor);
+				if (virouEsq) {
+					virarDuasRodasEsq(angCurva, velocidadeCurva);
+				} else {
+					virarDuasRodasDir(angCurva, velocidadeCurva);
+				}
 			}
-		}/*
-		 * else if (orientacaoAtual == OESTE) { if (virouDir) {
-		 * virarDuasRodasDir(angCurva, velocidadeMenor); } else {
-		 * virarDuasRodasEsq(angCurva, velocidadeMenor); } } else if
-		 * (orientacaoAtual == LESTE) { if (virouDir) {
-		 * virarDuasRodasDir(angCurva, velocidadeMenor); } else {
-		 * virarDuasRodasEsq(angCurva, velocidadeMenor); } }
-		 */
+		}
 		angAnterior = anguloAtual;
 	}
 
@@ -213,10 +251,10 @@ public class Navegacao implements Runnable {
 		double anguloAnterior = anguloAtual;
 		long tempoInicio = System.currentTimeMillis();
 		while (true) {
-			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
+			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 1)) {
 				motorEsq.backward();
 				motorDir.forward();
-			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 2)) {
+			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 1)) {
 				motorEsq.forward();
 				motorDir.backward();
 			} else {
@@ -224,11 +262,10 @@ public class Navegacao implements Runnable {
 				break;
 			}
 			if ((System.currentTimeMillis() - tempoInicio) > 5000) {
-				Navegacao.parar();
-				Navegacao.ré();
+				parar();
+				ré();
 				Delay.msDelay(1000);
-				Navegacao.parar();
-				Navegacao.resetarTacometro();
+				parar();
 				tempoInicio = System.currentTimeMillis();
 			}
 		}
@@ -251,10 +288,10 @@ public class Navegacao implements Runnable {
 		double anguloAnterior = anguloAtual;
 		long tempoInicio = System.currentTimeMillis();
 		while (true) {
-			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 2)) {
+			if ((Math.abs(anguloAnterior - anguloAtual) < ang - 1)) {
 				motorEsq.forward();
 				motorDir.backward();
-			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 2)) {
+			} else if ((Math.abs(anguloAnterior - anguloAtual) > ang + 1)) {
 				motorEsq.backward();
 				motorDir.forward();
 			} else {
@@ -262,11 +299,10 @@ public class Navegacao implements Runnable {
 				break;
 			}
 			if ((System.currentTimeMillis() - tempoInicio) > 5000) {
-				Navegacao.parar();
-				Navegacao.ré();
+				parar();
+				ré();
 				Delay.msDelay(1000);
-				Navegacao.parar();
-				Navegacao.resetarTacometro();
+				parar();
 				tempoInicio = System.currentTimeMillis();
 			}
 		}
@@ -281,10 +317,26 @@ public class Navegacao implements Runnable {
 	 * anda para frente até que mude de sala
 	 */
 	public static void irProxSala() {
+		long tempoInicio = System.currentTimeMillis();
 		setVelocidade(2 * velocidadeMenor);
 		double anguloAnterior = anguloAtual;
-		while (!mudouDeSala)
+		while (!mudouDeSala) {
 			andarFrente(anguloAnterior);
+			if ((System.currentTimeMillis() - tempoInicio) > 2000) {
+				parar();
+				ré();
+				Delay.msDelay(500);
+				parar();
+				virarDuasRodasDir(angCurva, velocidadeCurva);
+				anguloAnterior = getAngAnterior();
+				andarFrente(anguloAnterior);
+				Delay.msDelay(1000);
+				virarDuasRodasEsq(angCurva, velocidadeCurva);
+				anguloAnterior = getAngAnterior();
+				while(!mudouDeSala)
+				andarFrente(anguloAnterior);
+			}
+		}
 		resetarTacometro();
 	}
 
