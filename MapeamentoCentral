@@ -1,4 +1,5 @@
 package salaCentral;
+
 import java.util.List;
 
 import lejos.hardware.Button;
@@ -7,21 +8,17 @@ import lejos.utility.Delay;
 
 public class Mapeamento {
 	private static Posicao ultMapeadaCentral;
-	private static Posicao ultMapeadaPeriferica;
 	private static Posicao atual;
 	private static int ultOrientacaoCentral;
-	private static int ultOrientacaoPeriferica;
 	private static int numLinhas = 9;
 	private static int numColunas = 9;
 	private static Celula[][] Mapa = new Celula[numLinhas][numColunas];
 	private static Celula[][] MapaCentral = new Celula[numLinhas][numColunas];
-	private static Celula[][] MapaPeriferico1 = new Celula[numLinhas][numColunas];
 	private static int linhaInicial = 4;
 	private static int colunaInicial = 0;
 	private static int linha = linhaInicial;
 	private static int coluna = colunaInicial;
 	private static Posicao inicio = new Posicao(linhaInicial, colunaInicial);
-	private static Posicao porta = new Posicao(linhaInicial, colunaInicial);
 	private static boolean naoPodeAlinhar = false;
 
 	public static int vazio = 0;
@@ -48,8 +45,6 @@ public class Mapeamento {
 	public static final int SALAPERIFERICA = 2;
 	public static int salaAtual = MODULOINICIAL;
 	public static int ultSala;
-	private static boolean perifericaDireita = false;
-	private static boolean perifericaEsquerda = false;
 
 	/**
 	 * Verificar se a celula foi checada, caso não, salva o conteudo na matriz.
@@ -64,70 +59,67 @@ public class Mapeamento {
 			Mapa[linha][coluna].setOccupied(false);
 			resgatando = true;
 			mapearZigZag = false;
-			if (salaAtual == SALACENTRAL) {
-				try {
-					retornar(inicio);
-				} catch (Exception e) {
-					Button.LEDPattern(3);
-					if (coluna < 3) {
-						if (linha != 4) {
-							while (linha < 4) {
-								mudarOrientacao(Navegacao.LESTE);
-								irProximaCelula();
-								atualizarCelulas();
-							}
-							while (linha > 4) {
-								mudarOrientacao(Navegacao.OESTE);
-								irProximaCelula();
-								atualizarCelulas();
-							}
-						}
-						mudarOrientacao(Navegacao.SUL);
-						while (coluna > 0) {
-							irProximaCelula();
-							atualizarCelulas();
-						}
-					} else if (coluna > 5) {
-						mudarOrientacao(Navegacao.OESTE);
-						while (linha > 3) {
-							irProximaCelula();
-							atualizarCelulas();
-						}
-						mudarOrientacao(Navegacao.SUL);
-						while (coluna > 0) {
-							irProximaCelula();
-							atualizarCelulas();
-						}
-						mudarOrientacao(Navegacao.LESTE);
+			try {
+				retornar(inicio);
+			} catch (Exception e) {
+				Button.LEDPattern(3);
+				if (coluna < 3) {
+					if (linha != 4) {
 						while (linha < 4) {
+							mudarOrientacao(Navegacao.LESTE);
 							irProximaCelula();
 							atualizarCelulas();
 						}
-						mudarOrientacao(Navegacao.SUL);
-					} else {
-						mudarOrientacao(Navegacao.SUL);
-						while (coluna > 0) {
+						while (linha > 4) {
+							mudarOrientacao(Navegacao.OESTE);
 							irProximaCelula();
 							atualizarCelulas();
 						}
-						if (linha != 4) {
-							while (linha < 4) {
-								mudarOrientacao(Navegacao.LESTE);
-								irProximaCelula();
-								atualizarCelulas();
-							}
-							while (linha > 4) {
-								mudarOrientacao(Navegacao.OESTE);
-								irProximaCelula();
-								atualizarCelulas();
-							}
-						}
-						mudarOrientacao(Navegacao.SUL);
 					}
-					deixarBonecoDestino();
+					mudarOrientacao(Navegacao.SUL);
+					while (coluna > 0) {
+						irProximaCelula();
+						atualizarCelulas();
+					}
+				} else if (coluna > 5) {
+					mudarOrientacao(Navegacao.OESTE);
+					while (linha > 3) {
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					mudarOrientacao(Navegacao.SUL);
+					while (coluna > 0) {
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					mudarOrientacao(Navegacao.LESTE);
+					while (linha < 4) {
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					mudarOrientacao(Navegacao.SUL);
+				} else {
+					mudarOrientacao(Navegacao.SUL);
+					while (coluna > 0) {
+						irProximaCelula();
+						atualizarCelulas();
+					}
+					if (linha != 4) {
+						while (linha < 4) {
+							mudarOrientacao(Navegacao.LESTE);
+							irProximaCelula();
+							atualizarCelulas();
+						}
+						while (linha > 4) {
+							mudarOrientacao(Navegacao.OESTE);
+							irProximaCelula();
+							atualizarCelulas();
+						}
+					}
+					mudarOrientacao(Navegacao.SUL);
 				}
-			} else
-				retornar(porta);
+				deixarBonecoDestino();
+			}
 			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
 			Navegacao.parar();
@@ -183,9 +175,9 @@ public class Mapeamento {
 			}
 		}
 		fazerManobra();
-		Navegacao.andarGraus(0.1);
+		Navegacao.andarGraus(tamanhoDaCelula/2);
 		Captura.abrirGarra();
-		Navegacao.andarGraus(-0.1);
+		Navegacao.andarGraus(-tamanhoDaCelula/2);
 		mudarOrientacao(ultOrientacaoCentral);
 		resetarProxCelulas();
 	}
@@ -211,8 +203,6 @@ public class Mapeamento {
 			atualizarCelulas();
 			if (Navegacao.mudouDeSala) {
 				atualizarSala();
-				perifericaDireita = false;
-				perifericaEsquerda = false;
 			}
 		}
 	}
@@ -235,8 +225,6 @@ public class Mapeamento {
 				checarCelulas();
 			}
 			if (Navegacao.mudouDeSala) {
-				perifericaDireita = true;
-				perifericaEsquerda = false;
 				atualizarSala();
 			}
 		}
@@ -260,8 +248,6 @@ public class Mapeamento {
 				checarCelulas();
 			}
 			if (Navegacao.mudouDeSala) {
-				perifericaDireita = false;
-				perifericaEsquerda = true;
 				atualizarSala();
 			}
 		}
@@ -319,17 +305,19 @@ public class Mapeamento {
 		} else {
 			estaNaParede = false;
 		}
-		
-		if((linha == 8 && (coluna == 3 || coluna == 4 || coluna == 5)) ||(linha == 0 && (coluna == 3 || coluna == 4 || coluna == 5)))
+
+		if ((linha == 8 && (coluna == 3 || coluna == 4 || coluna == 5))
+				|| (linha == 0 && (coluna == 3 || coluna == 4 || coluna == 5)))
 			naoPodeAlinhar = true;
 		else
 			naoPodeAlinhar = false;
 
-		if (!naoPodeAlinhar && ((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
-				|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.OESTE)
-				|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))) {
+		if (!naoPodeAlinhar
+				&& ((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
+						|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.OESTE)
+						|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))) {
 			Navegacao.alinhar();
-		} 
+		}
 
 		if (estaNaParede && linha != linhaInicial && mapearZigZag) {
 			Navegacao.parar();
@@ -365,42 +353,8 @@ public class Mapeamento {
 			break;
 		case SALACENTRAL:
 			MapaCentral = Mapa;
-			if (Navegacao.orientacaoAtual == Navegacao.SUL) {
-				salaAtual = MODULOINICIAL;
-				System.out.println("MODULO INICIAL");
-
-			} else {
-				salaAtual = SALAPERIFERICA;
-				Mapa = MapaPeriferico1;
-				if (perifericaDireita) {
-					linha = 0;
-					coluna = (numColunas - 1) / 2;
-				} else if (perifericaEsquerda) {
-					linha = numLinhas - 1;
-					coluna = (numColunas - 1) / 2;
-				} else {
-					linha = linhaInicial;
-					coluna = colunaInicial;
-				}
-				System.out.println("SALA PERIFERICA");
-				porta = Mapa[linha][coluna].getPosicao();
-			}
-			break;
-		case SALAPERIFERICA:
-			MapaPeriferico1 = Mapa;
-			salaAtual = SALACENTRAL;
-			Mapa = MapaCentral;
-			if (perifericaDireita) {
-				linha = numLinhas - 1;
-				coluna = (numColunas - 1) / 2;
-			} else if (perifericaEsquerda) {
-				linha = 0;
-				coluna = (numColunas - 1) / 2;
-			} else {
-				linha = linhaInicial;
-				coluna = numColunas - 1;
-			}
-			System.out.println("SALA CENTRAL");
+			salaAtual = MODULOINICIAL;
+			System.out.println("MODULO INICIAL");
 			break;
 		}
 		/*
@@ -423,10 +377,11 @@ public class Mapeamento {
 			// se houver algo alem da parede a 15 cm
 			Navegacao.setVelocidade(velocidadeMenor);
 			double distanciaBoneco = Reconhecimento.getDistancia();
-			Navegacao.andarGraus(distanciaBoneco - 0.05);
+			Navegacao.andarGraus(distanciaBoneco - 0.02);
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
 			Captura.fecharGarra();
+			Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 			if (!Reconhecimento.getPreto()) {
 				Button.LEDPattern(2);
 				Mapa[linha][coluna].setChecked(true);
@@ -457,7 +412,6 @@ public class Mapeamento {
 			}
 		}
 		MapaCentral = Mapa;
-		MapaPeriferico1 = Mapa;
 	}
 
 	/**
@@ -472,13 +426,8 @@ public class Mapeamento {
 		atual = Mapa[linha][coluna].getPosicao();
 
 		if (resgatando) {
-			if (salaAtual == SALACENTRAL) {
-				ultMapeadaCentral = atual;
-				ultOrientacaoCentral = Navegacao.orientacaoAtual;
-			} else if (salaAtual == SALAPERIFERICA) {
-				ultMapeadaPeriferica = atual;
-				ultOrientacaoPeriferica = Navegacao.orientacaoAtual;
-			}
+			ultMapeadaCentral = atual;
+			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 		}
 
 		List<Celula> caminho = aStar.search(atual, objetivo);
@@ -504,62 +453,12 @@ public class Mapeamento {
 			irProximaCelula();
 			atualizarCelulas();
 		}
-
-		if (resgatando && salaAtual == SALAPERIFERICA) {
-			ultSala = SALAPERIFERICA;
-			if (perifericaDireita) {
-				switch (Navegacao.orientacaoAtual) {
-				case Navegacao.SUL:
-					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-					break;
-				case Navegacao.NORTE:
-					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
-					break;
-				default:
-					break;
-				}
-			} else if (perifericaEsquerda) {
-				switch (Navegacao.orientacaoAtual) {
-				case Navegacao.NORTE:
-					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-					break;
-				case Navegacao.SUL:
-					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
-					break;
-				default:
-					break;
-				}
-			} else {
-				switch (Navegacao.orientacaoAtual) {
-				case Navegacao.LESTE:
-					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-					break;
-				case Navegacao.OESTE:
-					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
-					break;
-				default:
-					break;
-				}
-			}
-			Navegacao.irProxSala();
-			atualizarSala();
-			retornar(inicio);
-		}
-
 		if (resgatando) {
 			deixarBonecoDestino();
 			resgatando = false;
 			retornandoMapeamento = true;
 			retornar(ultMapeadaCentral);
-			if (ultSala == SALAPERIFERICA) {
-				Navegacao.irProxSala();
-				atualizarSala();
-				retornar(ultMapeadaPeriferica);
-				if (Navegacao.orientacaoAtual != ultOrientacaoPeriferica)
-					mudarOrientacao(ultOrientacaoPeriferica);
-			} else {
-				mudarOrientacao(ultOrientacaoCentral);
-			}
+			mudarOrientacao(ultOrientacaoCentral);
 			retornandoMapeamento = false;
 		}
 	}
