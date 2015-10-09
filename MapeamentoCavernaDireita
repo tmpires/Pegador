@@ -430,13 +430,14 @@ public class Mapeamento{
 	private static int verificarConteudo() throws Exception {
 		if (Reconhecimento.getDistancia() <= 0.1 && Captura.getGarraAberta()
 				&& !estaNaParede) {
-			// se houver algo alem da parede a 10 cm
+			// se houver algo alem da parede a 15 cm
 			Navegacao.setVelocidade(velocidadeMenor);
 			double distanciaBoneco = Reconhecimento.getDistancia();
 			Navegacao.andarGraus(distanciaBoneco - 0.02);
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
 			Captura.fecharGarra();
+			Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 			if (!Reconhecimento.getPreto()) {
 				Button.LEDPattern(2);
 				Mapa[linha][coluna].setChecked(true);
@@ -445,7 +446,6 @@ public class Mapeamento{
 			} else {
 				Button.LEDPattern(1);
 				Mapa[linha][coluna].setChecked(true);
-				Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 				return bonecoPreto;
 			}
 		} else {
