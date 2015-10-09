@@ -1189,6 +1189,7 @@ public class Mapeamento {
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
 			Captura.fecharGarra();
+			Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 			if (!Reconhecimento.getPreto()) {
 				Button.LEDPattern(2);
 				Mapa[linha][coluna].setChecked(true);
