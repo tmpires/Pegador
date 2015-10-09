@@ -22,7 +22,6 @@ public class Mapeamento {
 	private static int linha = linhaInicial;
 	private static int coluna = colunaInicial;
 	private static Posicao inicio = new Posicao(linhaInicial, colunaInicial);
-	private static Posicao porta = new Posicao(linhaInicial, colunaInicial);
 
 	public static int vazio = 0;
 	public static int bonecoPreto = 1;
@@ -65,7 +64,6 @@ public class Mapeamento {
 			Mapa[linha][coluna].setOccupied(false);
 			resgatando = true;
 			mapearZigZag = false;
-			if (salaAtual == SALACENTRAL) {
 				try {
 					retornar(inicio);
 				} catch (Exception e) {
@@ -126,9 +124,7 @@ public class Mapeamento {
 						mudarOrientacao(Navegacao.SUL);
 					}
 					deixarBonecoDestino();
-				}
-			} else
-				retornar(porta);
+				} 
 			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
 			Navegacao.parar();
@@ -486,6 +482,7 @@ public class Mapeamento {
 			// andar o quanto falta para chegar no alvo
 			Navegacao.parar();
 			Captura.fecharGarra();
+			Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 			if (!Reconhecimento.getPreto()) {
 				Button.LEDPattern(2);
 				Mapa[linha][coluna].setChecked(true);
@@ -494,7 +491,6 @@ public class Mapeamento {
 			} else {
 				Button.LEDPattern(1);
 				Mapa[linha][coluna].setChecked(true);
-				Navegacao.andarGraus(-(distanciaBoneco - 0.02));
 				return bonecoPreto;
 			}
 		} else {
