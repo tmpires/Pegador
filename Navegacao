@@ -1,4 +1,5 @@
-package salaCentral;
+package salaParedeDireita;
+
 import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
@@ -43,6 +44,12 @@ public class Navegacao implements Runnable {
 		resetarTacometro();
 	}
 
+	public static void andarFrente() {
+		setVelocidade(velocidadeMaior);
+		motorEsq.forward();
+		motorDir.forward();
+	}
+
 	/**
 	 * anda para frente
 	 */
@@ -78,14 +85,14 @@ public class Navegacao implements Runnable {
 	public static int getVelocidadeMaior() {
 		return velocidadeMaior;
 	}
-	
+
 	/**
 	 * @return velocidadeMaior
 	 */
 	public static int getVelocidadeCurva() {
 		return velocidadeCurva;
 	}
-	
+
 	/**
 	 * 
 	 * @return angCurva
@@ -164,9 +171,10 @@ public class Navegacao implements Runnable {
 		resetarTacometro();
 		angAnterior = anguloAtual;
 	}
-	
+
 	/**
 	 * retorna a flag inverter navegacao
+	 * 
 	 * @return
 	 */
 	public static boolean getInverterNavegacao() {
@@ -322,7 +330,7 @@ public class Navegacao implements Runnable {
 		double anguloAnterior = anguloAtual;
 		while (!mudouDeSala) {
 			andarFrente(anguloAnterior);
-			if ((System.currentTimeMillis() - tempoInicio) > 2000) {
+			if ((System.currentTimeMillis() - tempoInicio) > 3000) {
 				parar();
 				ré();
 				Delay.msDelay(500);
@@ -333,8 +341,25 @@ public class Navegacao implements Runnable {
 				Delay.msDelay(1000);
 				virarDuasRodasEsq(angCurva, velocidadeCurva);
 				anguloAnterior = getAngAnterior();
-				while(!mudouDeSala)
-				andarFrente(anguloAnterior);
+				tempoInicio = System.currentTimeMillis();
+				while (!mudouDeSala){
+					andarFrente(anguloAnterior);
+					if ((System.currentTimeMillis() - tempoInicio) > 3000) {
+						parar();
+						ré();
+						Delay.msDelay(500);
+						parar();
+						virarDuasRodasEsq(angCurva, velocidadeCurva);
+						anguloAnterior = getAngAnterior();
+						andarFrente(anguloAnterior);
+						Delay.msDelay(2000);
+						virarDuasRodasDir(angCurva, velocidadeCurva);
+						anguloAnterior = getAngAnterior();
+						while (!mudouDeSala)
+							andarFrente(anguloAnterior);
+					}
+				}
+					
 			}
 		}
 		resetarTacometro();
