@@ -1,0 +1,61 @@
+import lejos.hardware.Button;
+import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.EV3UltrasonicSensor;
+import lejos.robotics.SampleProvider;
+
+public class Reconhecimento implements Runnable {
+
+	private static EV3ColorSensor sensorCor = new EV3ColorSensor(SensorPort.S2);
+	private static EV3UltrasonicSensor sensorUS = new EV3UltrasonicSensor(
+			SensorPort.S1);
+
+	private static boolean éBranco;
+	private static boolean temBoneco;
+	private static float distancia;
+
+	private static void amostraCor() {
+
+		SampleProvider Cor = sensorCor.getRGBMode();
+		SampleProvider dist = sensorUS.getDistanceMode();
+		float amostraCor[] = new float[Cor.sampleSize()];
+		float amostraDist[] = new float[dist.sampleSize()];
+		Cor.fetchSample(amostraCor, 0);
+		dist.fetchSample(amostraDist, 0);
+		distancia = amostraDist[0];
+
+		if (amostraCor[1] > 0.02 && amostraCor[1] < 0.15) {
+			Cor.fetchSample(amostraCor, 0);
+			if (amostraCor[1] > 0.02 && amostraCor[1] < 0.15) {
+				éBranco = true;
+				temBoneco = true;
+			}
+		} else {
+			éBranco = false;
+			if (amostraCor[1] > 0.01) {
+				temBoneco = true;
+			} else {
+				temBoneco = false;
+			}
+		}
+	}
+
+	public static boolean getPreto() {
+		return éBranco;
+	}
+
+	public static float getDistancia() {
+		return distancia;
+	}
+
+	public static boolean getBoneco() {
+		return temBoneco;
+	}
+
+	public void run() {
+		while (!Button.ESCAPE.isDown()) {
+			amostraCor();
+		}
+	}
+
+}
