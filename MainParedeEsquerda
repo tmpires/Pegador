@@ -1,0 +1,38 @@
+
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
+
+public class ParedeEsquerda {
+
+	public static void main(String[] args) throws Exception {
+		// TODO Auto-generated method stub
+		init();
+		Mapeamento.inicializarMapa();
+		Navegacao.irProxSala();
+		Mapeamento.atualizarSala();
+		Mapeamento.inicializarParedes();
+		Navegacao.andarFrente();
+		Delay.msDelay(1800);
+		Mapeamento.irPerifericaEsquerda();
+		Mapeamento.procurarParede();
+		while (!Button.ESCAPE.isDown()) {
+			Mapeamento.irProximaCelula();
+			Mapeamento.checarCelulas();
+			Mapeamento.atualizarCelulas();
+		}
+	}
+
+	private static void init() {
+		Reconhecimento reconhecimento = new Reconhecimento();
+		Thread thReconhecimento = new Thread(reconhecimento);
+		thReconhecimento.start();
+		Sound.beepSequenceUp();
+		while (!Button.ENTER.isDown()) {
+			System.out.println("Aperte ENTER para inciar");
+		}
+		Navegacao navegacao = new Navegacao();
+		Thread thNavegacao = new Thread(navegacao);
+		thNavegacao.start();
+	}
+}
