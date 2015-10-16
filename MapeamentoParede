@@ -1444,9 +1444,9 @@ public class Mapeamento {
 	}
 
 	/**
-	 * Voltar para a ultima orientacao
+	 * Mudar para a orientacao desejada
+	 * @param orientacao
 	 */
-
 	private static void mudarOrientacao(int orientacao) {
 		switch (orientacao) {
 		case (Navegacao.LESTE):
@@ -1455,8 +1455,13 @@ public class Mapeamento {
 				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
 				break;
 			case (Navegacao.OESTE):
-				Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
-				Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+				if (coluna != 0) {
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+				} else {
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				}
 				break;
 			case (Navegacao.SUL):
 				Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
@@ -1470,8 +1475,14 @@ public class Mapeamento {
 				Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
 				break;
 			case (Navegacao.LESTE):
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				if (coluna != 0) {
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+
+				} else {
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+				}
 				break;
 			case (Navegacao.SUL):
 				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
@@ -1488,8 +1499,13 @@ public class Mapeamento {
 				Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
 				break;
 			case (Navegacao.SUL):
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				if (linha != 0) {
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				} else {
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+				}
 				break;
 			}
 			Navegacao.orientacaoAtual = Navegacao.NORTE;
@@ -1504,8 +1520,13 @@ public class Mapeamento {
 				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
 				break;
 			case (Navegacao.NORTE):
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
-				Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				if (linha != 8) {
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasDir(angCurva, velocidadeCurva);
+				} else {
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+					Navegacao.virarDuasRodasEsq(angCurva, velocidadeCurva);
+				}
 				break;
 			}
 			Navegacao.orientacaoAtual = Navegacao.SUL;
