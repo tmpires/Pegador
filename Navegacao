@@ -1,5 +1,3 @@
-package salaParedeDireita;
-
 import lejos.hardware.Button;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
@@ -22,7 +20,7 @@ public class Navegacao implements Runnable {
 	// private static final double DISTANCIA_RODAS = 0.137; // metros
 	private static int velocidadeMenor = 100;
 	private static int velocidadeCurva = 80;
-	private static int velocidadeMaior = (int) (motorDir.getMaxSpeed() * 0.6);
+	private static int velocidadeMaior = (int) (motorDir.getMaxSpeed() * 0.5);
 	private static int angCurva = 87;
 	public static final int LESTE = 0;
 	public static final int NORTE = 1;
@@ -52,19 +50,26 @@ public class Navegacao implements Runnable {
 
 	/**
 	 * anda para frente
+	 * @throws Exception 
 	 */
-	public static void andarFrente(double ang) {
+	public static void andarFrente(double ang) throws Exception {
 		if (anguloAtual > ang + 5 || anguloAtual < ang - 5) {
 			setVelocidade(velocidadeMenor);
 			parar();
 			while (anguloAtual > ang + 5) {
 				motorEsq.forward();
 				motorDir.backward();
+				if(Button.UP.isDown())
+					Mapeamento.reiniciarSala();
 			}
 			while (anguloAtual < ang - 5) {
 				motorEsq.backward();
 				motorDir.forward();
+				if(Button.UP.isDown())
+					Mapeamento.reiniciarSala();
 			}
+			if(Button.UP.isDown())
+				Mapeamento.reiniciarSala();
 			resetarTacometro();
 		}
 		setVelocidade(velocidadeMaior);
@@ -323,8 +328,9 @@ public class Navegacao implements Runnable {
 
 	/**
 	 * anda para frente até que mude de sala
+	 * @throws Exception 
 	 */
-	public static void irProxSala() {
+	public static void irProxSala() throws Exception {
 		long tempoInicio = System.currentTimeMillis();
 		setVelocidade(2 * velocidadeMenor);
 		double anguloAnterior = anguloAtual;
@@ -333,7 +339,7 @@ public class Navegacao implements Runnable {
 			if ((System.currentTimeMillis() - tempoInicio) > 3000) {
 				parar();
 				ré();
-				Delay.msDelay(500);
+				Delay.msDelay(800);
 				parar();
 				virarDuasRodasDir(angCurva, velocidadeCurva);
 				anguloAnterior = getAngAnterior();
