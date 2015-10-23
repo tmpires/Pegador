@@ -1,5 +1,4 @@
 import java.util.List;
-
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.utility.Delay;
@@ -112,36 +111,40 @@ public class Mapeamento {
 			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
 			Navegacao.parar();
-			moverBonecoBranco();
+			moverBonecoPreto();
 			Navegacao.setVelocidade(velocidadeMaior);
 		}
 	}
 
 	/**
-	 * Leva o boneco branco para a celula mais proxima que está vazia
+	 * Leva o boneco preto para a celula mais proxima que está vazia
 	 * 
 	 * @throws Exception
 	 */
-	public static void moverBonecoBranco() throws Exception {
+	public static void moverBonecoPreto() throws Exception {
 		if (coluna > 0 && !Mapa[linha][coluna - 1].isOccupied()
-				&& (linha != linhaInicial && (coluna - 1) != colunaInicial)) {
+				&& Mapa[linha][coluna - 1].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.SUL) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha][coluna - 1].setOccupied(true);
 			mudarOrientacao(Navegacao.SUL);
 		} else if (linha < numLinhas - 1
 				&& !Mapa[linha + 1][coluna].isOccupied()
-				&& ((linha + 1) != linhaInicial && coluna != colunaInicial)) {
+				&& Mapa[linha + 1][coluna].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.LESTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha + 1][coluna].setOccupied(true);
 			mudarOrientacao(Navegacao.LESTE);
 		} else if (linha > 0 && !Mapa[linha - 1][coluna].isOccupied()
-				&& ((linha - 1) != linhaInicial && coluna != colunaInicial)) {
+				&& Mapa[linha - 1][coluna].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.OESTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha - 1][coluna].setOccupied(true);
 			mudarOrientacao(Navegacao.OESTE);
 		} else if (coluna < numColunas - 1
 				&& !Mapa[linha][coluna + 1].isOccupied()
-				&& (linha != linhaInicial && (coluna - 1) != colunaInicial)) {
+				&& Mapa[linha][coluna + 1].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.NORTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha][coluna + 1].setOccupied(true);
 			mudarOrientacao(Navegacao.NORTE);
@@ -155,8 +158,15 @@ public class Mapeamento {
 			} else if (Navegacao.orientacaoAtual == Navegacao.LESTE) {
 				mudarOrientacao(Navegacao.OESTE);
 				Mapa[linha - 1][coluna].setOccupied(true);
+			} else if (Navegacao.orientacaoAtual == Navegacao.NORTE) {
+				mudarOrientacao(Navegacao.SUL);
+				Mapa[linha][coluna - 1].setOccupied(true);
+			} else {
+				mudarOrientacao(Navegacao.NORTE);
+				Mapa[linha][coluna + 1].setOccupied(true);
 			}
 		}
+		Mapa[linha][coluna].setOccupied(false);
 		Navegacao.setVelocidade(velocidadeMenor);
 		Navegacao.andarGraus(tamanhoDaCelula / 2);
 		Captura.abrirGarra();
