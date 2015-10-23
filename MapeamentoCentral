@@ -1,5 +1,4 @@
 
-
 import java.util.List;
 
 import lejos.hardware.Button;
@@ -41,19 +40,20 @@ public class Mapeamento {
 	public static final int SALAPERIFERICA = 2;
 	public static int salaAtual = MODULOINICIAL;
 	public static int ultSala;
-	
+
 	/**
 	 * reinicia para o modulo inicial sem perder o mapeamento
+	 * 
 	 * @throws Exception
 	 */
-	public static void reiniciarSala() throws Exception{
+	public static void reiniciarSala() throws Exception {
 		Navegacao.parar();
 		ultMapeadaCentral = Mapa[linha][coluna].getPosicao();
 		ultOrientacaoCentral = Navegacao.orientacaoAtual;
 		salaAtual = MODULOINICIAL;
 		Navegacao.orientacaoAtual = Navegacao.NORTE;
 		setMapearZigZag(false);
-		while(!Button.ENTER.isDown())
+		while (!Button.ENTER.isDown())
 			System.out.println("Aperte ENTER para retornar");
 		Navegacao.setAngAnterior(Navegacao.getAnguloAtual());
 		Navegacao.irProxSala();
@@ -82,98 +82,71 @@ public class Mapeamento {
 				retornar(inicio);
 			} catch (Exception e) {
 				Button.LEDPattern(3);
-				if (coluna < 3) {
-					if (linha != 4) {
-						while (linha < 4) {
-							mudarOrientacao(Navegacao.LESTE);
-							irProximaCelula();
-							atualizarCelulas();
-						}
-						while (linha > 4) {
-							mudarOrientacao(Navegacao.OESTE);
-							irProximaCelula();
-							atualizarCelulas();
-						}
-					}
-					mudarOrientacao(Navegacao.SUL);
-					while (coluna > 0) {
-						irProximaCelula();
-						atualizarCelulas();
-					}
-				} else if (coluna > 5) {
-					mudarOrientacao(Navegacao.OESTE);
-					while (linha > 3) {
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					mudarOrientacao(Navegacao.SUL);
-					while (coluna > 0) {
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					mudarOrientacao(Navegacao.LESTE);
-					while (linha < 4) {
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					mudarOrientacao(Navegacao.SUL);
-				} else {
-					mudarOrientacao(Navegacao.SUL);
-					while (coluna > 0) {
-						irProximaCelula();
-						atualizarCelulas();
-					}
-					if (linha != 4) {
-						while (linha < 4) {
-							mudarOrientacao(Navegacao.LESTE);
-							irProximaCelula();
-							atualizarCelulas();
-						}
-						while (linha > 4) {
-							mudarOrientacao(Navegacao.OESTE);
-							irProximaCelula();
-							atualizarCelulas();
-						}
-					}
-					mudarOrientacao(Navegacao.SUL);
-				}
-				deixarBonecoDestino();
-				retornar(ultMapeadaCentral);
+				retornarSemAestrela();
 			}
-			mapearZigZag = true;
 		} else if (conteudo == bonecoNaoPreto) {
 			Navegacao.parar();
-			moverBonecoBranco();
+			moverBonecoPreto();
 			Navegacao.setVelocidade(velocidadeMaior);
 		}
 	}
 
 	/**
-	 * Leva o boneco branco para a celula mais proxima que está vazia
+	 * Retorna sem se preocupar com os bonecos de outra cor
+	 * 
+	 * @throws Exception
+	 */
+	private static void retornarSemAestrela() throws Exception {
+		if (linha != 4) {
+			while (linha < 4) {
+				mudarOrientacao(Navegacao.LESTE);
+				irProximaCelula();
+				atualizarCelulas();
+			}
+			while (linha > 4) {
+				mudarOrientacao(Navegacao.OESTE);
+				irProximaCelula();
+				atualizarCelulas();
+			}
+		}
+		mudarOrientacao(Navegacao.SUL);
+		while (coluna > 0) {
+			irProximaCelula();
+			atualizarCelulas();
+		}
+		deixarBonecoDestino();
+	}
+
+	/**
+	 * Leva o boneco preto para a celula mais proxima que está vazia
 	 * 
 	 * @throws Exception
 	 */
 
-	public static void moverBonecoBranco() throws Exception {
+	public static void moverBonecoPreto() throws Exception {
 		if (coluna > 0 && !Mapa[linha][coluna - 1].isOccupied()
-				&& (linha != linhaInicial && (coluna - 1) != colunaInicial)) {
+				&& Mapa[linha][coluna - 1].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.SUL) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha][coluna - 1].setOccupied(true);
 			mudarOrientacao(Navegacao.SUL);
 		} else if (linha < numLinhas - 1
 				&& !Mapa[linha + 1][coluna].isOccupied()
-				&& ((linha + 1) != linhaInicial && coluna != colunaInicial)) {
+				&& Mapa[linha + 1][coluna].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.LESTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha + 1][coluna].setOccupied(true);
 			mudarOrientacao(Navegacao.LESTE);
 		} else if (linha > 0 && !Mapa[linha - 1][coluna].isOccupied()
-				&& ((linha - 1) != linhaInicial && coluna != colunaInicial)) {
+				&& Mapa[linha - 1][coluna].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.OESTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha - 1][coluna].setOccupied(true);
 			mudarOrientacao(Navegacao.OESTE);
 		} else if (coluna < numColunas - 1
 				&& !Mapa[linha][coluna + 1].isOccupied()
-				&& (linha != linhaInicial && (coluna - 1) != colunaInicial)) {
+				&& Mapa[linha][coluna + 1].getPosicao() != inicio
+				&& Navegacao.orientacaoAtual != Navegacao.NORTE) {
 			ultOrientacaoCentral = Navegacao.orientacaoAtual;
 			Mapa[linha][coluna + 1].setOccupied(true);
 			mudarOrientacao(Navegacao.NORTE);
@@ -187,8 +160,15 @@ public class Mapeamento {
 			} else if (Navegacao.orientacaoAtual == Navegacao.LESTE) {
 				mudarOrientacao(Navegacao.OESTE);
 				Mapa[linha - 1][coluna].setOccupied(true);
+			} else if (Navegacao.orientacaoAtual == Navegacao.NORTE) {
+				mudarOrientacao(Navegacao.SUL);
+				Mapa[linha][coluna - 1].setOccupied(true);
+			} else {
+				mudarOrientacao(Navegacao.NORTE);
+				Mapa[linha][coluna + 1].setOccupied(true);
 			}
 		}
+		Mapa[linha][coluna].setOccupied(false);
 		Navegacao.setVelocidade(velocidadeMenor);
 		Navegacao.andarGraus(tamanhoDaCelula / 2);
 		Captura.abrirGarra();
@@ -277,10 +257,10 @@ public class Mapeamento {
 		if (estaNaParede && linha != linhaInicial && mapearZigZag) {
 			Navegacao.parar();
 			Navegacao.ré();
-			if(naoPodeAlinhar){
+			if (naoPodeAlinhar) {
 				Delay.msDelay(1200);
 			} else {
-				Delay.msDelay(800);	
+				Delay.msDelay(800);
 			}
 			if (!resgatando) {
 				Navegacao.virarParede();
@@ -406,7 +386,7 @@ public class Mapeamento {
 					mudarOrientacao(Navegacao.NORTE);
 				}
 			}
-			if(((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
+			if (((linha == 0 && Navegacao.orientacaoAtual == Navegacao.LESTE)
 					|| (linha == 8 && Navegacao.orientacaoAtual == Navegacao.OESTE)
 					|| (coluna == 8 && Navegacao.orientacaoAtual == Navegacao.SUL) || (coluna == 0 && Navegacao.orientacaoAtual == Navegacao.NORTE))
 					&& linha != 4) {
@@ -449,9 +429,9 @@ public class Mapeamento {
 		Navegacao.resetarTacometro();
 	}
 
-
 	/**
 	 * Mudar para a orientacao desejada
+	 * 
 	 * @param orientacao
 	 */
 	private static void mudarOrientacao(int orientacao) {
@@ -541,7 +521,6 @@ public class Mapeamento {
 		}
 		Navegacao.setVelocidade(velocidadeMaior);
 	}
-
 
 	/**
 	 * Deixar o boneco no modulo inicial
